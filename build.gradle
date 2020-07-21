@@ -1,0 +1,483 @@
+import com.github.spotbugs.SpotBugsTask
+import org.gradle.internal.jvm.Jvm
+
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+// Apply the java plugin to add support for Java
+buildscript {
+
+    // log the current JVM version.
+    println "Build JVM Version is : " + Jvm.current()
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://repo1.maven.org/maven2"
+        }
+        maven {
+            url "https://repository.apache.org/snapshots"
+        }
+    }
+    dependencies {
+        classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
+        classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
+        classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
+        classpath group: 'ru.vyarus', name: 'gradle-mkdocs-plugin', version: gradleMkdocsPluginVersion
+        classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
+        classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
+        classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
+    }
+}
+
+if (project.hasProperty("enableMkdocs")) {
+    apply from: "$rootDir/gradle/mkdocs.gradle"
+}
+
+// apply the plugin outside of allProjects since the plugin attempts to set the grgit property for all the projects
+// https://github.com/ajoberstar/grgit/blob/master/src/main/groovy/org/ajoberstar/grgit/gradle/GrgitPlugin.groovy#L27
+apply plugin: 'org.ajoberstar.grgit'
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    if (file("src/main/java").isDirectory()) {
+        apply plugin: 'java'
+        apply plugin: 'io.franzbecker.gradle-lombok'
+        lombok {
+            version = lombokVersion
+        }
+        dependencies {
+            //These are compile time only dependencies needed accross all targets. Lombok uses them and may generate strange errors if they are missing.
+            compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
+            testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
+            compileOnly group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
+            testCompile group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
+            compileOnly 'org.projectlombok:lombok:' + lombokVersion
+            testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
+            annotationProcessor 'org.projectlombok:lombok:' + lombokVersion
+            testAnnotationProcessor 'org.projectlombok:lombok:' + lombokVersion
+        }
+        // Delombok sources.
+        task delombok(type: io.franzbecker.gradle.lombok.task.DelombokTask, dependsOn: compileJava) {
+            ext.outputDir = file("$buildDir/delombok")
+            outputs.dir(outputDir)
+            sourceSets.main.java.srcDirs.each {
+                inputs.dir(it)
+                args(it, "-d", outputDir)
+            }
+        }
+    }
+    // Plugin configurations
+    apply from: "$rootDir/gradle/application.gradle"
+    apply from: "$rootDir/gradle/checkstyle.gradle"
+    apply from: "$rootDir/gradle/eclipse.gradle"
+    apply from: "$rootDir/gradle/spotbugs.gradle"
+    apply from: "$rootDir/gradle/idea.gradle"
+    apply from: "$rootDir/gradle/jacoco.gradle"
+    apply from: "$rootDir/gradle/java.gradle"
+    apply from: "$rootDir/gradle/maven.gradle"
+    apply from: "$rootDir/gradle/protobuf.gradle"
+    apply from: "$rootDir/gradle/rat.gradle"
+
+    repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+        }
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+    tasks.withType(SpotBugsTask) {
+        classpath += sourceSets."${(it.name - ~/^spotbugs/).uncapitalize()}".compileClasspath
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+    }
+    version = getProjectVersion()
+    group = "io.pravega"
+
+    configurations.all {
+        resolutionStrategy {
+            //failOnVersionConflict()
+            force "com.google.guava:guava:" + guavaVersion
+            force "com.google.code.gson:gson:" + gsonVersion
+            force "com.google.protobuf:protobuf-java:" + protobufProtocVersion
+            force "io.grpc:grpc-context:" + grpcVersion
+            force "commons-beanutils:commons-beanutils:" + commonsBeanutilsVersion
+            force "org.apache.commons:commons-compress:" + apacheCommonsCompressVersion
+            force "org.apache.commons:commons-lang3:" + commonsLang3Version
+            force "org.apache.curator:curator-framework:" + apacheCuratorVersion
+            force "org.glassfish.jersey.core:jersey-common:" + jerseyVersion
+            force "org.glassfish.jersey.core:jersey-server:" + jerseyVersion
+            force "com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion 
+            force "org.slf4j:slf4j-api:" + slf4jApiVersion
+            force "org.apache.zookeeper:zookeeper:" + apacheZookeeperVersion
+            force "io.netty:netty-common:" + nettyVersion
+            force "io.netty:netty-transport:" + nettyVersion
+            force "io.netty:netty-handler:" + nettyVersion
+            force "io.netty:netty-codec:" + nettyVersion
+            force "io.netty:netty-codec-http:" + nettyVersion
+            force "io.netty:netty-codec-http2:" + nettyVersion
+            force "io.netty:netty-codec-socks:" + nettyVersion
+            force "io.netty:netty-handler-proxy:" + nettyVersion
+            force "io.netty:netty-transport-native-epoll:" + nettyVersion
+            force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
+            // Netty 4 uber jar
+            exclude group: 'io.netty', module: 'netty-all'
+            // Netty 3
+            exclude group: 'io.netty', module: 'netty'
+            dependencySubstitution {
+                substitute module("javax.ws.rs:jsr311-api") with module("javax.ws.rs:javax.ws.rs-api:" + javaxwsrsApiVersion)
+            }
+        }
+    }
+}
+def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
+
+project ('bindings-hdfs') {
+    dependencies {
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        testCompile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        // For HDFS
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+
+        // Adding JAXB API and the reference implementation as dependencies here, since they are not available
+        // in newer Java SE versions (11 and newer).
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+        compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
+    }
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+    }
+}
+
+
+project ('bindings-extendeds3') {
+    dependencies {
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+
+        testCompile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+
+        // Adding JAXB API and the reference implementation as dependencies here, since they are not available
+        // in newer Java SE versions (11 and newer).
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+        compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
+
+        //For Extended S3
+        compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
+        testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
+        testCompile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
+        testCompile group: 'org.apache.jclouds.provider', name: 'google-cloud-storage', version: '2.1.1'
+
+    }
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+    }
+}
+
+project ('bindings') {
+    dependencies {
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+
+        testCompile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        // For HDFS
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+
+        // Adding JAXB API and the reference implementation as dependencies here, since they are not available
+        // in newer Java SE versions (11 and newer).
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+        compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
+
+
+        //For Extended S3
+        compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
+        testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
+        testCompile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
+        testCompile group: 'org.apache.jclouds.provider', name: 'google-cloud-storage', version: '2.1.1'
+
+        compile project(":bindings-hdfs")
+        compile project(":bindings-extendeds3")
+    }
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+    }
+}
+
+project('test:integration') {
+    apply plugin: 'application'
+    applicationName = "pravega-selftest"
+    mainClassName = "io.pravega.test.integration.selftest.SelfTestRunner"
+
+    applicationDefaultJvmArgs = ["-server", "-Xmx4g", "-XX:+HeapDumpOnOutOfMemoryError",
+                                 "-Dlog.dir=PRAVEGA_APP_HOME/logs",
+                                 "-Dlog.name=selftest"]
+
+    applicationDistribution.from('src/config') {
+        into "conf"
+    }
+
+    dependencies {
+        compile "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+            "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+            "io.pravega:pravega-shared-protocol:${pravegaVersion}",
+            "io.pravega:pravega-shared-security:${pravegaVersion}",
+            "io.pravega:pravega-shared-authplugin:${pravegaVersion}",
+            "io.pravega:pravega-shared-cluster:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-storage:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-server:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-server-host:${pravegaVersion}",
+            "io.pravega:pravega-controller:${pravegaVersion}"
+        // project('bindings')
+        compile group: 'com.google.code.gson', name: 'gson', version: gsonVersion
+        compile group: 'junit', name:'junit', version: junitVersion
+        compile group: 'org.apache.curator', name: 'curator-test', version: apacheCuratorVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'org.apache.commons', name: 'commons-csv', version: apacheCommonsCsvVersion
+    }
+
+    task startServer(type: JavaExec) {
+        main = "io.pravega.segmentstore.server.host.ServiceStarter"
+        classpath = sourceSets.main.runtimeClasspath
+        standardInput = System.in
+    }
+
+    task startBenchmark(type: JavaExec) {
+        main = "io.pravega.segmentstore.server.host.ServiceBenchmark"
+        classpath = sourceSets.main.runtimeClasspath
+        standardInput = System.in
+    }
+
+    task startController(type: JavaExec) {
+        main = "io.pravega.controller.server.Main"
+        classpath = sourceSets.main.runtimeClasspath
+        standardInput = System.in
+    }
+
+    task selftest(type: JavaExec) {
+        main = "io.pravega.test.integration.selftest.SelfTestRunner"
+        classpath = sourceSets.main.runtimeClasspath
+        standardInput = System.in
+        systemProperties System.getProperties()
+    }
+}
+
+def getProjectVersion() {
+    String ver = pravegaVersion
+    if (grgit && ver.contains("-SNAPSHOT")) {
+        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
+        def count = grgit.log(includes:['HEAD']).size()
+        def commitId = "${grgit.head().abbreviatedId}"
+        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
+    }
+    return ver
+}
+
+subprojects {
+    task allDeps(type: DependencyReportTask) {}
+}
+
+task publishAllJars() {
+    dependsOn ':bindings:publish'
+    dependsOn ':bindings-hdfs:publish'
+    dependsOn ':bindings-extendeds3:publish'
+    // dependsOn ':segmentstore:contracts:publish'
+    // dependsOn ':segmentstore:storage:publish'
+    // dependsOn ':segmentstore:storage:impl:publish'
+    // dependsOn ':segmentstore:server:publish'
+    // dependsOn ':segmentstore:server:host:publish'
+}
+
+task sourceCopy(type: Copy) {
+    from rootDir
+    into 'source'
+}
+
+task sourceTar(type: Tar) {
+    dependsOn 'sourceCopy'
+    from  'source'
+    destinationDir = file('sourceArtifacts')
+    extension = 'tgz'
+    compression = Compression.GZIP
+}
+task javadocs(type: Javadoc) {
+    description = "Generate main pravega javadoc"
+
+    // Include names of any project that is to be included in the javadoc distribution
+    ext.projects = [':bindings', ':bindings-hdfs', ':bindings-extendeds3']
+    title = "Pravega Bindings API"
+    destinationDir = file("${buildDir}/javadocs")
+    source = files(projects.collect {
+        project(it).sourceSets.main.allJava
+    })
+    classpath = files(projects.collect {
+        project(it).sourceSets.main.output + project(it).sourceSets.main.compileClasspath
+    })
+    failOnError = true
+    exclude "**/impl/**"
+    options.addBooleanOption("Xdoclint:all,-reference", true)
+}
+
+apply plugin: 'distribution'
+distributions {
+    main {
+        baseName = "pravega-storage-adapters"
+        contents {
+            duplicatesStrategy = "exclude"
+            // from (project(":bindings").installDist)
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    javadoc {
+        baseName = "pravega-javadoc"
+        contents {
+            from (javadocs)
+        }
+    }
+}
+
+tasks.withType(Tar) {
+    compression = Compression.GZIP
+}
+
+task preparePravegaImage(type: Copy) {
+    into "${buildDir}/docker/pravega-storage-adapters"
+    from "docker/pravega-storage-adapters"
+    from (installDist) {
+        into "pravega"
+        exclude "**/*.bat"
+    }
+}
+
+task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
+    baseTag = pravegaBaseTag
+    dockerDir = preparePravegaImage.destinationDir.absolutePath
+    if (JavaVersion.current().isJava11Compatible()) {
+        dockerFile = "${dockerDir}/Dockerfile-java-11"
+    } else {
+        dockerFile = "${dockerDir}/Dockerfile"
+    }
+}
+
+task docker(dependsOn: [buildPravegaImage]) {
+    description = "Builds all docker images"
+}
+
+task pushPravegaImage(type: DockerPushTask) {
+    // No explicit dependency on building the pravega image
+    mustRunAfter buildPravegaImage
+    tag = "${pravegaBaseTag}:${version}"
+}
+
+
+task dockerPush(dependsOn: [pushPravegaImage]) {
+    description = "Push all docker images"
+}
+
+task distribution(dependsOn: [assembleDist, assembleJavadocDist]) {
+    description = "Builds a distribution package"
+}
+
+
+/**
+ * Task for building a docker image
+ */
+class DockerBuildTask extends Exec {
+    String baseTag
+    String dockerDir
+    String dockerFile
+
+    DockerBuildTask() {
+        executable project.dockerExecutable
+        args "build"
+        args "--pull"
+        args "-t", "${->baseTag}:${project.version}"
+        args "-t", "${->baseTag}:latest"
+        args "-f", "${->dockerFile}"
+        args "${->dockerDir}"
+    }
+}
+
+/**
+ * Task for pushing an image, which can either push to dockerhub or to a private registry.
+ * If pushing to dockerhub, you must be logged using using `docker login` before running.
+ */
+class DockerPushTask extends Exec {
+    String tag
+
+    DockerPushTask() {
+        executable project.dockerExecutable
+        args "push", "${->getRemoteTag()}"
+    }
+
+    protected void exec() {
+        // Tag the image with the remote image name first
+        if (project.hasProperty('dockerRegistry')) {
+            project.exec {
+                commandLine project.dockerExecutable, "tag", tag, getRemoteTag()
+            }
+        }
+        super.exec()
+    }
+
+    String getRemoteTag() {
+        if (project.hasProperty('dockerRegistry')) {
+            return "${project.property('dockerRegistry')}/${tag}"
+        }
+        else {
+            return tag
+        }
+    }
+}
