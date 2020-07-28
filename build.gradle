@@ -169,6 +169,7 @@ project ('bindings-hdfs') {
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
         testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
 
         // Adding JAXB API and the reference implementation as dependencies here, since they are not available
         // in newer Java SE versions (11 and newer).
@@ -186,6 +187,10 @@ project ('bindings-hdfs') {
 
 project ('bindings-extendeds3') {
     dependencies {
+        implementation group: 'com.google.guava', name: 'guava', version: guavaVersion
+        implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
+        implementation group: 'com.google.inject.extensions', name: 'guice-servlet', version: guiceVersion
+        implementation group: 'com.google.inject', name: 'guice', version: guiceVersion
         compile "io.pravega:pravega-client:${pravegaVersion}"
         compile "io.pravega:pravega-common:${pravegaVersion}",
                 "io.pravega:pravega-shared-metrics:${pravegaVersion}",
