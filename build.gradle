@@ -399,7 +399,7 @@ tasks.withType(Tar) {
 
 task preparePravegaImage(type: Copy) {
     into "${buildDir}/docker/pravega-storage-adapters"
-    from "docker/pravega-storage-adapters"
+    from "docker/pravega"
     from (installDist) {
         into "pravega"
         exclude "**/*.bat"
@@ -447,6 +447,7 @@ class DockerBuildTask extends Exec {
     DockerBuildTask() {
         executable project.dockerExecutable
         args "build"
+        args "--no-cache"
         args "--pull"
         args "-t", "${->baseTag}:${project.version}"
         args "-t", "${->baseTag}:latest"
