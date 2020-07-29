@@ -25,4 +25,4 @@ COPY ${S3_JAR} /opt/pravega/lib
 
 RUN chmod +x -R /opt/pravega/lib/
 
-ENTRYPOINT [ "/opt/pravega/scripts/entrypoint.sh" ]
+#ENTRYPOINT [ "/opt/pravega/scripts/entrypoint.sh" ]
