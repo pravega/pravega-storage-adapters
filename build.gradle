@@ -133,6 +133,7 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
+            force "com.google.code.gson:gson:2.5"
         }
     }
     if (project.hasProperty("doSigning") && project.property("doSigning") == "false") {
@@ -149,9 +150,28 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
 project ('extendeds3') {
+    configurations.all {
+        resolutionStrategy {
+            force "com.google.code.gson:gson:2.5"
+        }
+    }
     dependencies {
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
+        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
 
-	}
+        //For Extended S3
+        compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
+        testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
+        testCompile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
+        testCompile group: 'org.apache.jclouds.provider', name: 'google-cloud-storage', version: '2.1.1'
+
+        }
     javadoc {
         dependsOn delombok
         source = delombok.outputDir
@@ -167,6 +187,7 @@ project ('hdfs') {
                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
         compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
         compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
+        // For HDFS
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
