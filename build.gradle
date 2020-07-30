@@ -418,7 +418,7 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     }
     pravegaVersion = "${project.property('pravegaVersion')}"
     String PRAVEGA_BINDINGS_VERSION="${project.version}"
-    String DOCKER_IMAGE_REGISTRY="asdrepo.isus.emc.com:8103/nautilus"
+    String DOCKER_IMAGE_REGISTRY="asdrepo.isus.emc.com:8103/rajamr2"
     String DOCKER_IMAGE_REPOSITORY="pravega"
     String DOCKER_IMAGE_VERSION=pravegaVersion
     if (project.hasProperty('dockerRegistry')) {
@@ -459,9 +459,12 @@ class DockerBuildTask extends Exec {
         args "build"
         args "--no-cache"
         args "--pull"
-        args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${project.version},DOCKER_IMAGE_REGISTRY=asdrepo.isus.emc.com:8103/nautilus,DOCKER_IMAGE_REPOSITORY=pravega,DOCKER_IMAGE_VERSION="+pravegaVersion
+        args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${project.version}"
+        args "--build-arg", "DOCKER_IMAGE_REGISTRY=asdrepo.isus.emc.com:8103/nautilus"
+        args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
+        args "--build-arg", "DOCKER_IMAGE_VERSION=${project.pravegaVersion}"
         args "-t", "${->remoteTag}"
-        args "-t", "${->baseTag}:latest"
+        // args "-t", "${->baseTag}:latest"
         args "-f", "${->dockerFile}"
         args "${->dockerDir}"
     }
@@ -472,21 +475,32 @@ class DockerBuildTask extends Exec {
  * If pushing to dockerhub, you must be logged using using `docker login` before running.
  */
 class DockerPushTask extends Exec {
-    String pravegaVersion
-    String remoteTag
-    String baseTag
+    String tag
+
     DockerPushTask() {
         executable project.dockerExecutable
-        args "push", "${->remoteTag}"
+        args "push", "${->getRemoteTag()}"
     }
 
     protected void exec() {
         // Tag the image with the remote image name first
         if (project.hasProperty('dockerRegistry')) {
             project.exec {
-                commandLine project.dockerExecutable, "tag", baseTag+":"+version, remoteTag
+                commandLine project.dockerExecutable, "tag", tag, getRemoteTag()
             }
         }
         super.exec()
+    }
+
+    String getRemoteTag() {
+        String PRAVEGA_BINDINGS_VERSION="${project.version}"
+        String DOCKER_IMAGE_REGISTRY="asdrepo.isus.emc.com:8103/rajamr2"
+        String DOCKER_IMAGE_REPOSITORY="pravega"
+        String DOCKER_IMAGE_VERSION="${project.pravegaVersion}"
+        if (project.hasProperty('dockerRegistry')) {
+            DOCKER_IMAGE_REGISTRY = "${project.property('dockerRegistry')}"
+        }
+        String result = DOCKER_IMAGE_REGISTRY + "/" + DOCKER_IMAGE_REPOSITORY + ":" + PRAVEGA_BINDINGS_VERSION
+        return result
     }
 }
