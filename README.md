@@ -1,2 +1,2 @@
 # pravega-storage-adapters
-a sample project
+changes coming via pull request
