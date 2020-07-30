@@ -12,6 +12,8 @@ package io.pravega.test.integration.selftest.adapters;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
+import io.pravega.test.integration.selftest.MockStreamManager;
+import io.pravega.common.util.AsyncIterator;
 import io.pravega.common.util.BufferView;
 import io.pravega.segmentstore.contracts.AttributeUpdate;
 import io.pravega.segmentstore.contracts.MergeStreamSegmentResult;
@@ -21,14 +23,18 @@ import io.pravega.segmentstore.contracts.StreamSegmentExistsException;
 import io.pravega.segmentstore.contracts.StreamSegmentInformation;
 import io.pravega.segmentstore.contracts.StreamSegmentNotExistsException;
 import io.pravega.segmentstore.contracts.StreamSegmentStore;
+import io.pravega.segmentstore.contracts.tables.IteratorArgs;
+import io.pravega.segmentstore.contracts.tables.IteratorItem;
+import io.pravega.segmentstore.contracts.tables.TableEntry;
+import io.pravega.segmentstore.contracts.tables.TableKey;
 import io.pravega.segmentstore.contracts.tables.TableStore;
 import io.pravega.segmentstore.server.host.handler.PravegaConnectionListener;
 import io.pravega.test.common.NoOpScheduledExecutor;
 import io.pravega.test.integration.selftest.TestConfig;
-import io.pravega.test.integration.selftest.MockStreamManager;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -123,7 +129,7 @@ class InProcessMockClientAdapter extends ClientAdapterBase {
     }
 
     protected TableStore getTableStore() {
-        throw new UnsupportedOperationException("getTableStore");
+        return new MockTableStore();
     }
 
     //endregion
@@ -245,4 +251,66 @@ class InProcessMockClientAdapter extends ClientAdapterBase {
     }
 
     //endregion
+
+    private static class MockTableStore implements TableStore {
+        @Override
+        public CompletableFuture<Void> createSegment(String segmentName, boolean sorted, Duration timeout) {
+            throw new UnsupportedOperationException("createTableSegment");
+        }
+
+        @Override
+        public CompletableFuture<Void> deleteSegment(String segmentName, boolean mustBeEmpty, Duration timeout) {
+            throw new UnsupportedOperationException("deleteTableSegment");
+        }
+
+        @Override
+        public CompletableFuture<Void> merge(String targetSegmentName, String sourceSegmentName, Duration timeout) {
+            throw new UnsupportedOperationException("mergeTableSegments");
+        }
+
+        @Override
+        public CompletableFuture<Void> seal(String segmentName, Duration timeout) {
+            throw new UnsupportedOperationException("sealTableSegment");
+        }
+
+        @Override
+        public CompletableFuture<List<Long>> put(String segmentName, List<TableEntry> entries, Duration timeout) {
+            throw new UnsupportedOperationException("updateTableSegment");
+        }
+
+        @Override
+        public CompletableFuture<List<Long>> put(String segmentName, List<TableEntry> entries, long tableSegmentOffset, Duration timeout) {
+            throw new UnsupportedOperationException("updateTableSegment");
+        }
+
+        @Override
+        public CompletableFuture<Void> remove(String segmentName, Collection<TableKey> keys, Duration timeout) {
+            throw new UnsupportedOperationException("remove");
+        }
+
+        @Override
+        public CompletableFuture<Void> remove(String segmentName, Collection<TableKey> keys, long tableSegmentOffset, Duration timeout) {
+            throw new UnsupportedOperationException("remove");
+        }
+
+        @Override
+        public CompletableFuture<List<TableEntry>> get(String segmentName, List<BufferView> keys, Duration timeout) {
+            throw new UnsupportedOperationException("get");
+        }
+
+        @Override
+        public CompletableFuture<AsyncIterator<IteratorItem<TableKey>>> keyIterator(String segmentName, IteratorArgs args) {
+            throw new UnsupportedOperationException("keyIterator");
+        }
+
+        @Override
+        public CompletableFuture<AsyncIterator<IteratorItem<TableEntry>>> entryIterator(String segmentName, IteratorArgs args) {
+            throw new UnsupportedOperationException("entryIterator");
+        }
+
+        @Override
+        public CompletableFuture<AsyncIterator<IteratorItem<TableEntry>>> entryDeltaIterator(String segmentName, long fromPosition, Duration fetchTimeout) {
+            throw new UnsupportedOperationException("entryIterator");
+        }
+    }
 }

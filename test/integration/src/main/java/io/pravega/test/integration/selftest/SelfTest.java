@@ -70,7 +70,9 @@ class SelfTest extends AbstractService implements AutoCloseable {
     }
 
     private ProducerDataSource<?> createProducerDataSource(TestConfig config, TestState state, StoreAdapter store) {
-        return new StreamProducerDataSource(config, state, store);
+        return config.getTestType().isTablesTest()
+                ? new TableProducerDataSource(config, state, store)
+                : new StreamProducerDataSource(config, state, store);
     }
 
     //endregion
@@ -192,16 +194,22 @@ class SelfTest extends AbstractService implements AutoCloseable {
             return;
         }
 
-        // Create Stream Consumers.
-        int count = 0;
-        for (val si : this.state.getAllStreams()) {
-            if (!si.isTransaction()) {
-                this.actors.add(new Consumer(si.getName(), this.testConfig, this.state, this.store, this.executor));
-                count++;
+        if (this.testConfig.getTestType().isTablesTest()) {
+            // Create TableConsumer.
+            this.actors.add(new TableConsumer(this.testConfig, (TableProducerDataSource) this.dataSource, this.state, this.store, this.executor));
+            TestLogger.log(LOG_ID, "Created TableConsumer.");
+        } else {
+            // Create Stream Consumers.
+            int count = 0;
+            for (val si : this.state.getAllStreams()) {
+                if (!si.isTransaction()) {
+                    this.actors.add(new Consumer(si.getName(), this.testConfig, this.state, this.store, this.executor));
+                    count++;
+                }
             }
-        }
 
-        TestLogger.log(LOG_ID, "Created %s Consumer(s).", count);
+            TestLogger.log(LOG_ID, "Created %s Consumer(s).", count);
+        }
     }
 
     private void shutdownCallback() {

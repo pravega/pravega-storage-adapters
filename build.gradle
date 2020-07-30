@@ -29,6 +29,9 @@ buildscript {
         maven {
             url "https://repository.apache.org/snapshots"
         }
+        maven {
+            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
+        }
     }
     dependencies {
         classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
@@ -97,6 +100,9 @@ allprojects {
         mavenLocal()
         maven {
             url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+        }
+        maven {
+            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
         }
     }
 

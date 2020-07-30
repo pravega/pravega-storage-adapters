@@ -360,7 +360,9 @@ class Producer<T extends ProducerUpdate> extends Actor {
 
         @Override
         protected CompletableFuture<Void> executeInternal(ProducerOperation<T> operation) {
-            throw new UnsupportedOperationException("test");
+            TableUpdate update = (TableUpdate) operation.getUpdate();
+            return Producer.this.store.updateTableEntry(operation.getTarget(), update.getKey(), update.getValue(), update.getVersion(), Producer.this.config.getTimeout())
+                    .thenAccept(operation::setResult);
         }
     }
 
@@ -377,7 +379,8 @@ class Producer<T extends ProducerUpdate> extends Actor {
 
         @Override
         protected CompletableFuture<Void> executeInternal(ProducerOperation<T> operation) {
-            throw new UnsupportedOperationException("test");
+            TableUpdate update = (TableUpdate) operation.getUpdate();
+            return Producer.this.store.removeTableEntry(operation.getTarget(), update.getKey(), update.getVersion(), Producer.this.config.getTimeout());
         }
     }
 
