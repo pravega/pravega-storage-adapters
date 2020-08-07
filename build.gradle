@@ -32,6 +32,9 @@ buildscript {
         maven {
             url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
         }
+        maven {
+            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-local"
+        }
     }
     dependencies {
         classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
@@ -104,6 +107,9 @@ allprojects {
         maven {
             url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
         }
+        maven {
+            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-local"
+        }
     }
 
     gradle.projectsEvaluated {
@@ -173,6 +179,7 @@ project ('bindings-hdfs') {
         // For HDFS
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
         testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
