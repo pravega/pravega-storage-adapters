@@ -11,7 +11,4 @@
 rootProject.name = 'pravega'
 
 include 'bindings-hdfs',
-        'bindings-extendeds3',
-        'bindings',
-        'test:system',
-        'test:integration'
+        'bindings-extendeds3'
