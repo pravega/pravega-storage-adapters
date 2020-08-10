@@ -284,20 +284,22 @@ project('test:integration') {
     }
 
     dependencies {
-        compile "io.pravega:pravega-test-testcommon:${pravegaVersion}"
-        compile "io.pravega:pravega-client:${pravegaVersion}"
-        compile "io.pravega:pravega-common:${pravegaVersion}",
-            "io.pravega:pravega-shared-metrics:${pravegaVersion}",
-            "io.pravega:pravega-shared-protocol:${pravegaVersion}",
-            "io.pravega:pravega-shared-security:${pravegaVersion}",
-            "io.pravega:pravega-shared-authplugin:${pravegaVersion}",
-            "io.pravega:pravega-shared-cluster:${pravegaVersion}",
-            "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-            "io.pravega:pravega-segmentstore-storage:${pravegaVersion}",
-            "io.pravega:pravega-segmentstore-server:${pravegaVersion}",
-            "io.pravega:pravega-segmentstore-server-host:${pravegaVersion}",
-            "io.pravega:pravega-controller:${pravegaVersion}"
-        // project('bindings')
+        compile "io.pravega:pravega-test-testcommon:${pravegaTestVersion}"
+        compile "io.pravega:pravega-client:${pravegaTestVersion}"
+        compile "io.pravega:pravega-common:${pravegaTestVersion}",
+            "io.pravega:pravega-shared-metrics:${pravegaTestVersion}",
+            "io.pravega:pravega-shared-protocol:${pravegaTestVersion}",
+            "io.pravega:pravega-shared-security:${pravegaTestVersion}",
+            "io.pravega:pravega-shared-authplugin:${pravegaTestVersion}",
+            "io.pravega:pravega-shared-cluster:${pravegaTestVersion}",
+            "io.pravega:pravega-segmentstore-contracts:${pravegaTestVersion}",
+            "io.pravega:pravega-segmentstore-storage:${pravegaTestVersion}",
+            "io.pravega:pravega-segmentstore-server:${pravegaTestVersion}",
+            "io.pravega:pravega-segmentstore-server-host:${pravegaTestVersion}",
+            "io.pravega:pravega-controller:${pravegaTestVersion}"
+        compile project(":bindings-hdfs")
+        compile project(":bindings-extendeds3")
+        compile project(":bindings")
         compile group: 'com.google.code.gson', name: 'gson', version: gsonVersion
         compile group: 'junit', name:'junit', version: junitVersion
         compile group: 'org.apache.curator', name: 'curator-test', version: apacheCuratorVersion

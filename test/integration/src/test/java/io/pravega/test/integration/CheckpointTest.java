@@ -29,12 +29,12 @@ import io.pravega.client.stream.ReinitializationRequiredException;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.JavaSerializer;
-import io.pravega.client.stream.mock.MockClientFactory;
-import io.pravega.client.stream.mock.MockStreamManager;
 import io.pravega.test.common.InlineExecutor;
 import io.pravega.test.common.TestUtils;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
+import io.pravega.test.integration.selftest.MockClientFactory;
+import io.pravega.test.integration.selftest.MockStreamManager;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

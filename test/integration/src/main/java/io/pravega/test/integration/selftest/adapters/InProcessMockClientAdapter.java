@@ -12,7 +12,6 @@ package io.pravega.test.integration.selftest.adapters;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
-import io.pravega.test.integration.selftest.MockStreamManager;
 import io.pravega.common.util.AsyncIterator;
 import io.pravega.common.util.BufferView;
 import io.pravega.segmentstore.contracts.AttributeUpdate;
@@ -30,6 +29,8 @@ import io.pravega.segmentstore.contracts.tables.TableKey;
 import io.pravega.segmentstore.contracts.tables.TableStore;
 import io.pravega.segmentstore.server.host.handler.PravegaConnectionListener;
 import io.pravega.test.common.NoOpScheduledExecutor;
+import io.pravega.test.integration.selftest.MockClientFactory;
+import io.pravega.test.integration.selftest.MockStreamManager;
 import io.pravega.test.integration.selftest.TestConfig;
 import java.time.Duration;
 import java.util.Collection;

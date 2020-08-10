@@ -37,7 +37,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.control.impl.Controller;
 import io.pravega.client.stream.impl.PendingEvent;
-import io.pravega.client.stream.mock.MockController;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.segmentstore.contracts.StreamSegmentStore;
 import io.pravega.segmentstore.contracts.tables.TableStore;
@@ -47,6 +46,7 @@ import io.pravega.segmentstore.server.store.ServiceBuilderConfig;
 import io.pravega.shared.protocol.netty.WireCommands;
 import io.pravega.test.common.LeakDetectorTestSuite;
 import io.pravega.test.common.TestUtils;
+import io.pravega.test.integration.selftest.MockController;
 import lombok.Cleanup;
 
 public class AppendReconnectTest extends LeakDetectorTestSuite {

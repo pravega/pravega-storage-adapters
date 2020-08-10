@@ -9,6 +9,7 @@
  */
 package io.pravega.test.integration;
 
+import io.pravega.segmentstore.server.host.StorageLoader;
 import io.pravega.segmentstore.server.store.ServiceBuilder;
 import io.pravega.segmentstore.server.store.ServiceBuilderConfig;
 import io.pravega.segmentstore.server.store.ServiceConfig;
@@ -16,6 +17,7 @@ import io.pravega.segmentstore.storage.ConfigSetup;
 import io.pravega.segmentstore.storage.DurableDataLogException;
 import io.pravega.segmentstore.storage.StorageFactory;
 import io.pravega.segmentstore.storage.StorageLayoutType;
+import io.pravega.segmentstore.storage.noop.StorageExtraConfig;
 import io.pravega.storage.extendeds3.ExtendedS3SimpleStorageFactory;
 import io.pravega.storage.extendeds3.ExtendedS3StorageConfig;
 import io.pravega.storage.extendeds3.ExtendedS3StorageFactory;
@@ -88,7 +90,7 @@ public class StorageLoaderTest {
                 .with(ExtendedS3StorageConfig.BUCKET, "bucket")
                 .with(ExtendedS3StorageConfig.PREFIX, "samplePrefix")
                 .build();
-        val extraConfig = StorageExtraConfig.builder()
+        StorageExtraConfig extraConfig = StorageExtraConfig.builder()
                 .with(StorageExtraConfig.STORAGE_NO_OP_MODE, false)
                 .build();
         when(configSetup.getConfig(any())).thenReturn(extraConfig, config);
