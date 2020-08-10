@@ -6,12 +6,24 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'pravega'
+package io.pravega.test.system.framework.kubernetes;
 
-include 'bindings-hdfs',
-        'bindings-extendeds3',
-        'bindings',
-        'test:system',
-        'test:integration'
+/**
+ * Client factory.
+ */
+public enum ClientFactory {
+
+    INSTANCE;
+
+    private final K8sClient client;
+
+    ClientFactory() {
+        this.client = new K8sClient();
+    }
+
+    public K8sClient getK8sClient() {
+        return client;
+    }
+
+}

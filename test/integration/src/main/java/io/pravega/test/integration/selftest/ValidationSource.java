@@ -6,12 +6,15 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'pravega'
 
-include 'bindings-hdfs',
-        'bindings-extendeds3',
-        'bindings',
-        'test:system',
-        'test:integration'
+package io.pravega.test.integration.selftest;
+
+/**
+ * Defines various validation sources.
+ */
+enum ValidationSource {
+    TailRead,
+    CatchupRead,
+    StorageRead
+}

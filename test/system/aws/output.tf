@@ -8,10 +8,14 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  */
-rootProject.name = 'pravega'
+output "ip" {
+  value = "${aws_instance.swarm_master.*.public_ip}"
+}
 
-include 'bindings-hdfs',
-        'bindings-extendeds3',
-        'bindings',
-        'test:system',
-        'test:integration'
+output "master_public_dns" {
+  value = "${aws_instance.swarm_master.*.public_dns}"
+}
+
+output "slave_public_dns" {
+  value = "${aws_instance.swarm_slaves.*.public_dns}"
+}
