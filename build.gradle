@@ -232,7 +232,7 @@ project ('bindings-extendeds3') {
     }
 }
 
-project ('bindings') {
+project ('bindings-test') {
     dependencies {
         compile "io.pravega:pravega-client:${pravegaVersion}"
         compile "io.pravega:pravega-common:${pravegaVersion}",
@@ -299,7 +299,7 @@ project('test:integration') {
             "io.pravega:pravega-controller:${pravegaTestVersion}"
         compile project(":bindings-hdfs")
         compile project(":bindings-extendeds3")
-        compile project(":bindings")
+        compile project(":bindings-test")
         compile group: 'com.google.code.gson', name: 'gson', version: gsonVersion
         compile group: 'junit', name:'junit', version: junitVersion
         compile group: 'org.apache.curator', name: 'curator-test', version: apacheCuratorVersion
@@ -557,7 +557,7 @@ subprojects {
 }
 
 task publishAllJars() {
-    dependsOn ':bindings:publish'
+    dependsOn ':bindings-test:publish'
     dependsOn ':bindings-hdfs:publish'
     dependsOn ':bindings-extendeds3:publish'
     // dependsOn ':segmentstore:contracts:publish'
@@ -583,7 +583,7 @@ task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
 
     // Include names of any project that is to be included in the javadoc distribution
-    ext.projects = [':bindings', ':bindings-hdfs', ':bindings-extendeds3']
+    ext.projects = [':bindings-test', ':bindings-hdfs', ':bindings-extendeds3']
     title = "Pravega Bindings API"
     destinationDir = file("${buildDir}/javadocs")
     source = files(projects.collect {
