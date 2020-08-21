@@ -21,18 +21,6 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        maven {
-            url "https://repo1.maven.org/maven2"
-        }
-        maven {
-            url "https://repository.apache.org/snapshots"
-        }
-        maven {
-            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
-        }
     }
     dependencies {
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
@@ -104,9 +92,6 @@ allprojects {
         maven {
             url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
-        maven {
-            url "# https://mvnrepository.com/artifact"
-        }
     }
 
     gradle.projectsEvaluated {
@@ -131,7 +116,6 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
-            force "com.google.code.gson:gson:2.5"
         }
     }
 }
@@ -140,28 +124,32 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
 
-project ('extendeds3') {
+project ('common') {
     dependencies {
-        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-        testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
-
-        compile group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
-        compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: guiceVersion
-        compile group: 'com.google.inject', name: 'guice', version: guiceVersion
-        compile "io.pravega:pravega-client:${pravegaTestVersion}"
-        compile "io.pravega:pravega-common:${pravegaTestVersion}",
-                "io.pravega:pravega-shared-metrics:${pravegaTestVersion}",
-                "io.pravega:pravega-segmentstore-contracts:${pravegaTestVersion}",
-                 "io.pravega:pravega-segmentstore-storage:${pravegaTestVersion}"
-
-        testCompile  "io.pravega:pravega-test-testcommon:${pravegaTestVersion}"
-
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
         // Adding JAXB API and the reference implementation as dependencies here, since they are not available
         // in newer Java SE versions (11 and newer).
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
         compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
+    }
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+    }
 
+}
+
+project ('extendeds3') {
+    dependencies {
+        compile project(':common')
+        compile files(project(':common').sourceSets.test.output)
         //For Extended S3
         compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
         testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
@@ -178,7 +166,8 @@ project ('extendeds3') {
 
 project ('hdfs') {
     dependencies {
-
+        compile project(':common')
+        compile files(project(':common').sourceSets.test.output)
 	}
     javadoc {
         dependsOn delombok
@@ -203,6 +192,7 @@ subprojects {
 }
 
 task publishAllJars() {
+    dependsOn ':common:publish'
     dependsOn ':extendeds3:publish'
     dependsOn ':hdfs:publish'
 }
