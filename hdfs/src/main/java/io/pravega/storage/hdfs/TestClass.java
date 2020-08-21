@@ -7,10 +7,10 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.storage.extendeds3;
+package io.pravega.storage.hdfs;
 
-public class Playground {
-	public static void main(String[] args) {
-		System.out.println("Hello world!");
-	}
+public class TestClass {
+    public static void main(String[] args) {
+        System.out.println("Hello world.");
+    }
 }

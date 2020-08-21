@@ -9,8 +9,8 @@
  */
 package io.pravega.storage.extendeds3;
 
-public class PlaygroundTest {
-	public static void main(String[] args) {
-		System.out.println("Hello world!");
-	}
+public class TestClass {
+    public static void main(String[] args) {
+        System.out.println("Hello world.");
+    }
 }
