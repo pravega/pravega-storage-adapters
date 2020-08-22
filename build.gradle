@@ -31,10 +31,7 @@ buildscript {
             url "https://repository.apache.org/snapshots"
         }
         maven {
-            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
-        }
-        maven {
-            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-local"
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
     }
     dependencies {
@@ -105,10 +102,7 @@ allprojects {
             url "https://repository.apache.org/snapshots"
         }
         maven {
-            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
-        }
-        maven {
-            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-local"
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
     }
 
