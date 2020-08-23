@@ -21,5 +21,5 @@
     <allow pkg="io.micrometer"/>
     <allow pkg="com.emc.object"/>
     <allow pkg="org.gaul.s3proxy" />
-
+    <allow pkg="org.jclouds" />
 </import-control>
