@@ -104,6 +104,9 @@ allprojects {
         maven {
             url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
+        maven {
+            url "# https://mvnrepository.com/artifact"
+        }
     }
 
     gradle.projectsEvaluated {
@@ -128,6 +131,7 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
+            force "com.google.code.gson:gson:2.5"
         }
     }
 }
@@ -139,6 +143,8 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 project ('extendeds3') {
     dependencies {
         compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
+
         compile group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: guiceVersion
         compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: guiceVersion
         compile group: 'com.google.inject', name: 'guice', version: guiceVersion
