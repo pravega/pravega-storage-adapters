@@ -80,6 +80,18 @@ allprojects {
         jcenter()
         mavenCentral()
         mavenLocal()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://repo1.maven.org/maven2"
+        }
+        maven {
+            url "https://repository.apache.org/snapshots"
+        }
+        maven {
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+        }
     }
 
     gradle.projectsEvaluated {
@@ -112,6 +124,28 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
 
+project ('common') {
+    dependencies {
+        compile "io.pravega:pravega-client:${pravegaVersion}"
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        // Adding JAXB API and the reference implementation as dependencies here, since they are not available
+        // in newer Java SE versions (11 and newer).
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+        compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
+    }
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+    }
+
+}
+
 project ('extendeds3') {
     dependencies {
 
@@ -125,7 +159,15 @@ project ('extendeds3') {
 
 project ('hdfs') {
     dependencies {
-
+        compile project(':common')
+        compile files(project(':common').sourceSets.test.output)
+        // For HDFS
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
+        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
 	}
     javadoc {
         dependsOn delombok
@@ -150,6 +192,7 @@ subprojects {
 }
 
 task publishAllJars() {
+    dependsOn ':common:publish'
     dependsOn ':extendeds3:publish'
     dependsOn ':hdfs:publish'
 }
