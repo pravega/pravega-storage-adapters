@@ -1,0 +1,44 @@
+#
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+git:
+  depth: false
+language: java
+install: true
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - GRADLE_OPTS="-Xms128m"
+
+jobs:
+  include:
+    # the secure configurations in env: is for BINTRAY_USER=<USER> and BINTRAY_KEY=<KEY> properties
+    # which will be used for publishing artifacts to snapshot repository
+    - stage: build
+      if: type IN (push, pull_request)
+      install: ./gradlew assemble
+      script: ./gradlew check
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) -t e6a26a41-93b8-4dfe-b45c-3ff72f5709dd
+sudo: required
+
+services:
+  - docker
+
+cache:
+  directories:
+    - ".gradle"
+    - "$HOME/.gradle"
+    - "$HOME/.m2"
+
+notifications:
+  email:
+    - sachin.joshi@dell.com

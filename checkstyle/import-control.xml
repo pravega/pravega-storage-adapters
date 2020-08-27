@@ -1,0 +1,25 @@
+<!DOCTYPE import-control PUBLIC
+        "-//Puppy Crawl//DTD Import Control 1.1//EN"
+        "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
+<import-control pkg="io.pravega">
+
+    <!-- THINK HARD ABOUT THE LAYERING OF THE PROJECT BEFORE CHANGING THIS FILE -->
+
+    <!-- common library dependencies -->
+    <allow pkg="java"/>
+    <allow pkg="javax.management"/>
+    <allow pkg="javax.annotation"/>
+    <allow pkg="org.apache.commons.lang"/>
+    <allow pkg="org.slf4j"/>
+    <allow pkg="org.junit"/>
+    <allow pkg="org.mockito"/>
+    <allow pkg="com.google"/>
+    <allow pkg="io.pravega"/>
+    <allow pkg="lombok"/>
+    <allow pkg="ch.qos.logback"/>
+    <allow pkg="org.apache"/>
+    <allow pkg="io.micrometer"/>
+    <allow pkg="com.emc.object"/>
+    <allow pkg="org.gaul.s3proxy" />
+
+</import-control>
