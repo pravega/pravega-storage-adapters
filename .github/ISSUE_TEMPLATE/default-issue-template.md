@@ -1,5 +1,5 @@
 ---
-name: Default Issue Template
+name: Default Issue Template 2
 about: Default one.
 title: ''
 labels: ''
