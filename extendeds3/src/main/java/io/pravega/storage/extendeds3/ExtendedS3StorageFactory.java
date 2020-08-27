@@ -7,8 +7,9 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.storage.hdfs;
+package io.pravega.storage.extendeds3;
 
+import com.emc.object.s3.jersey.S3JerseyClient;
 import io.pravega.segmentstore.storage.AsyncStorageWrapper;
 import io.pravega.segmentstore.storage.Storage;
 import io.pravega.segmentstore.storage.StorageFactory;
@@ -17,27 +18,30 @@ import io.pravega.segmentstore.storage.rolling.RollingStorage;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
- * Factory for HDFS Storage adapters.
+ * Factory for ExtendedS3 Storage adapters.
  */
 @RequiredArgsConstructor
-public class HDFSStorageFactory implements StorageFactory {
+public class ExtendedS3StorageFactory implements StorageFactory {
     @NonNull
-    private final HDFSStorageConfig config;
-
+    private final ExtendedS3StorageConfig config;
     @NonNull
-    private final Executor executor;
+    private final ExecutorService executor;
 
     @Override
     public Storage createStorageAdapter() {
-        HDFSStorage s = new HDFSStorage(this.config);
-        return new AsyncStorageWrapper(new RollingStorage(s), this.executor);
+        return new AsyncStorageWrapper(new RollingStorage(createS3Storage()), this.executor);
     }
 
     @Override
     public SyncStorage createSyncStorage() {
-        return new HDFSStorage(this.config);
+        return createS3Storage();
+    }
+
+    private ExtendedS3Storage createS3Storage() {
+        S3JerseyClient client = new S3JerseyClient(config.getS3Config());
+        return new ExtendedS3Storage(client, this.config);
     }
 }
