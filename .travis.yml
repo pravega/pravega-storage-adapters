@@ -27,7 +27,7 @@ jobs:
       install: ./gradlew assemble
       script: ./gradlew check
       after_success:
-        - bash <(curl -s https://codecov.io/bash) -t ccceafaf-7c60-4a02-9165-480174b535a2
+        - bash <(curl -s https://codecov.io/bash) -t e6a26a41-93b8-4dfe-b45c-3ff72f5709dd
 sudo: required
 
 services:
