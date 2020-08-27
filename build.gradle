@@ -147,10 +147,17 @@ project ('common') {
 }
 
 project ('extendeds3') {
+    configurations.all {
+        resolutionStrategy {
+            force "com.google.code.gson:gson:2.5"
+        }
+    }
     dependencies {
         compile project(':common')
         compile files(project(':common').sourceSets.test.output)
         //For Extended S3
+        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
         compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
         testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
         testCompile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
