@@ -10,5 +10,6 @@
  */
 rootProject.name = 'pravega-storage-adapters'
 
-include 'extendeds3',
+include 'common',
+        'extendeds3',
         'hdfs'
