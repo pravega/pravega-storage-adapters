@@ -17,7 +17,8 @@ import io.pravega.segmentstore.contracts.StreamSegmentSealedException;
 import java.io.FileNotFoundException;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.PathNotFoundException;
-import org.apache.hadoop.security.AccessControlException;
+import org.apache.hadoop.hdfs.protocol.AclException;
+import org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException;
 import org.apache.hadoop.ipc.RemoteException;
 
 /**
@@ -39,9 +40,9 @@ final class HDFSExceptionHelpers {
 
         if (e instanceof PathNotFoundException || e instanceof FileNotFoundException) {
             return new StreamSegmentNotExistsException(segmentName, e);
-        } else if (e instanceof FileAlreadyExistsException) {
+        } else if (e instanceof FileAlreadyExistsException || e instanceof AlreadyBeingCreatedException) {
             return new StreamSegmentExistsException(segmentName, e);
-        } else if (e instanceof AccessControlException) {
+        } else if (e instanceof AclException) {
             return new StreamSegmentSealedException(segmentName, e);
         } else {
             throw Exceptions.sneakyThrow(e);
@@ -74,7 +75,7 @@ final class HDFSExceptionHelpers {
      * @param segmentName The name of the segment to construct the Exception for.
      * @return The new exception.
      */
-    static AccessControlException segmentSealedException(String segmentName) {
-        return new AccessControlException(segmentName);
+    static AclException segmentSealedException(String segmentName) {
+        return new AclException(segmentName);
     }
 }
