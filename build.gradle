@@ -285,7 +285,7 @@ class DockerBuildTask extends Exec {
         args "--no-cache"
         args "--pull"
         args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${->pravegaVersion}"
-        args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega"
+        args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters"
         args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
         args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"
         args "-t", "${->remoteTag}"
