@@ -116,6 +116,7 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
+            force "com.google.code.gson:gson:2.5"
         }
     }
 }
@@ -125,8 +126,8 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 
 
 project ('common') {
+    apply plugin: 'maven'
     dependencies {
-        compile "io.pravega:pravega-client:${pravegaVersion}"
         compile "io.pravega:pravega-common:${pravegaVersion}",
                 "io.pravega:pravega-shared-metrics:${pravegaVersion}",
                 "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
@@ -143,11 +144,22 @@ project ('common') {
         source = delombok.outputDir
         failOnError = true
     }
-
+    jar {
+        archiveName = "pravega-storage-adapters-test-common.jar"
+        from {
+            (configurations.runtime).collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        }
+        from sourceSets.test.output
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    }
 }
 
 project ('extendeds3') {
     dependencies {
+        compile project(':common')
+        compile files(project(':common').sourceSets.test.output)
 
 	}
     javadoc {
@@ -168,6 +180,7 @@ project ('hdfs') {
         testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
+
 	}
     javadoc {
         dependsOn delombok
@@ -189,12 +202,6 @@ def getProjectVersion() {
 
 subprojects {
     task allDeps(type: DependencyReportTask) {}
-}
-
-task publishAllJars() {
-    dependsOn ':common:publish'
-    dependsOn ':extendeds3:publish'
-    dependsOn ':hdfs:publish'
 }
 
 task sourceCopy(type: Copy) {
