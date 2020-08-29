@@ -29,12 +29,12 @@ import io.pravega.segmentstore.storage.SyncStorage;
 public abstract class RollingStorageTestBase extends StorageTestBase {
     protected static final long DEFAULT_ROLLING_SIZE = (int) (APPEND_FORMAT.length() * 1.5);
 
-    /**
-     * Indicates the layout format to test.
-     * For AsycStorageWrapper and RollingStorage it is set to true.
-     * For ChunkedSegmentStorage set to false.
-     */
-    protected boolean useOldLayout = true;
+    ///**
+    // * Indicates the layout format to test.
+    // * For AsycStorageWrapper and RollingStorage it is set to true.
+    // * For ChunkedSegmentStorage set to false.
+    //*/
+    // protected boolean useOldLayout = true;
 
     @Override
     public void testFencing() throws Exception {
