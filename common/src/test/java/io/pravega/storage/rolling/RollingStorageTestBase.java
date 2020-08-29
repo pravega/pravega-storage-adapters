@@ -9,7 +9,8 @@
  */
 package io.pravega.storage.rolling;
 
-// import io.pravega.segmentstore.storage.AsyncStorageWrapper;
+import io.pravega.segmentstore.storage.AsyncStorageWrapper;
+import io.pravega.segmentstore.storage.rolling.RollingStorage;
 import io.pravega.segmentstore.storage.SegmentRollingPolicy;
 import io.pravega.segmentstore.storage.Storage;
 import io.pravega.storage.StorageTestBase;
@@ -190,8 +191,7 @@ public abstract class RollingStorageTestBase extends StorageTestBase {
     }
 
     protected Storage wrap(SyncStorage storage) {
-        return null;
-        // return new AsyncStorageWrapper(new RollingStorage(storage, new SegmentRollingPolicy(DEFAULT_ROLLING_SIZE)), executorService());
+        return new AsyncStorageWrapper(new RollingStorage(storage, new SegmentRollingPolicy(DEFAULT_ROLLING_SIZE)), executorService());
     }
 
     protected long getSegmentRollingSize() {

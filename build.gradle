@@ -131,7 +131,7 @@ project ('common') {
         compile "io.pravega:pravega-common:${pravegaVersion}",
                 "io.pravega:pravega-shared-metrics:${pravegaVersion}",
                 "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
         compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
         // Adding JAXB API and the reference implementation as dependencies here, since they are not available
         // in newer Java SE versions (11 and newer).
