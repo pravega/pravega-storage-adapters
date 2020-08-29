@@ -198,7 +198,8 @@ public class HDFSStorageTest extends StorageTestBase {
 
             // Storage1 should be able to execute only read-only operations.
             verifyWriteOperationsFail(handle1, storage1);
-//            verifyConcatOperationsFail(handle1, storage1);
+            // THIS TEST IS DISABLED SINCE THIS FOLDER WILL BE DELETED
+            // verifyConcatOperationsFail(handle1, storage1);
             verifyReadOnlyOperationsSucceed(handle1, storage1);
 
             // Storage2 should be able to execute all operations.
