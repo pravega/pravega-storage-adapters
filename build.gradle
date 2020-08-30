@@ -28,6 +28,7 @@ buildscript {
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
+        classpath fileTree(dir: "$rootDir/libs", include: "*.jar")
     }
 }
 
@@ -176,7 +177,7 @@ project ('hdfs') {
     dependencies {
         compile project(':common')
         compile files(project(':common').sourceSets.test.output)
-        compile files('libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar')
+        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar")
         // For HDFS
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
