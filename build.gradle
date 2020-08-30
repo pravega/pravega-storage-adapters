@@ -137,6 +137,7 @@ project ('common') {
                 "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
                 "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
         compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar")
         // Adding JAXB API and the reference implementation as dependencies here, since they are not available
         // in newer Java SE versions (11 and newer).
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
