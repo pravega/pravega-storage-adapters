@@ -92,6 +92,9 @@ allprojects {
         maven {
             url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
+        flatDir {
+            dirs 'libs'
+        }
     }
 
     gradle.projectsEvaluated {
@@ -173,6 +176,7 @@ project ('hdfs') {
     dependencies {
         compile project(':common')
         compile files(project(':common').sourceSets.test.output)
+        compile files('libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar')
         // For HDFS
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
