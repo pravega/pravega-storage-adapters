@@ -114,8 +114,15 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 
 project ('extendeds3') {
     dependencies {
+        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
 
-	}
+        //For Extended S3
+        compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
+        testCompile group: 'io.findify', name: 's3mock_2.13', version: '0.2.6'	
+        implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.834')
+        implementation 'com.amazonaws:aws-java-sdk-s3'
+        }
     javadoc {
         dependsOn delombok
         source = delombok.outputDir
