@@ -22,5 +22,7 @@
     <allow pkg="com.emc.object"/>
     <allow pkg="org.gaul.s3proxy" />
     <allow pkg="org.jclouds" />
+    <allow pkg="io.findify" />
+    <allow pkg="com.amazonaws" />
 
 </import-control>
