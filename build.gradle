@@ -217,7 +217,7 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     }
     pravegaVersion = "${project.property('pravegaDockerImageVersion')}"
     String PRAVEGA_BINDINGS_VERSION="${project.version}"
-    String DOCKER_IMAGE_REGISTRY="pravega/pravega-adapters"
+    String DOCKER_IMAGE_REGISTRY="pravega/pravega-storage-adapters"
     String DOCKER_IMAGE_REPOSITORY="pravega"
     String DOCKER_IMAGE_VERSION=pravegaVersion
     if (project.hasProperty('dockerRegistry')) {
@@ -258,7 +258,7 @@ class DockerBuildTask extends Exec {
         args "--no-cache"
         args "--pull"
         args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${->pravegaVersion}"
-        args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters"
+        args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega"
         args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
         args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"
         args "-t", "${->remoteTag}"
@@ -290,7 +290,7 @@ class DockerPushTask extends Exec {
 
     String getRemoteTag() {
         String PRAVEGA_BINDINGS_VERSION="${project.property('pravegaDockerImageVersion')}"
-        String DOCKER_IMAGE_REGISTRY="pravega/pravega-adapters"
+        String DOCKER_IMAGE_REGISTRY="pravega/pravega-storage-adapters"
         String DOCKER_IMAGE_REPOSITORY="pravega"
         String DOCKER_IMAGE_VERSION="${project.property('pravegaDockerImageVersion')}"
         if (project.hasProperty('dockerRegistry')) {
