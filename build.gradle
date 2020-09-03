@@ -28,6 +28,7 @@ buildscript {
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
+        classpath fileTree(dir: "$rootDir/libs", include: "*.jar")
     }
 }
 
@@ -80,6 +81,21 @@ allprojects {
         jcenter()
         mavenCentral()
         mavenLocal()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://repo1.maven.org/maven2"
+        }
+        maven {
+            url "https://repository.apache.org/snapshots"
+        }
+        maven {
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+        }
+        flatDir {
+            dirs 'libs'
+        }
     }
 
     gradle.projectsEvaluated {
@@ -111,7 +127,6 @@ allprojects {
 def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
-
 project ('extendeds3') {
     dependencies {
 
@@ -125,6 +140,18 @@ project ('extendeds3') {
 
 project ('hdfs') {
     dependencies {
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
+        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
 
 	}
     javadoc {
