@@ -130,8 +130,6 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 
 project ('extendeds3') {
     dependencies {
-        compile project(':common')
-        compile files(project(':common').sourceSets.test.output)
 
 	}
     javadoc {
