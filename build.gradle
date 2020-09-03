@@ -136,7 +136,9 @@ allprojects {
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
         }
     }
-    signArchives.enabled = false;
+    if (project.hasProperty("doSigning") && project.property("doSigning") == "false") {
+        signArchives.enabled = false;
+    }
 }
 
 task publishAllJars() {
