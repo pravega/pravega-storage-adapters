@@ -120,7 +120,6 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
-            force "com.google.code.gson:gson:2.5"
         }
     }
 }
@@ -128,43 +127,8 @@ allprojects {
 def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
-
-project ('common') {
-    apply plugin: 'maven'
-    dependencies {
-        compile "io.pravega:pravega-common:${pravegaVersion}",
-                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
-        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
-        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar")
-        // Adding JAXB API and the reference implementation as dependencies here, since they are not available
-        // in newer Java SE versions (11 and newer).
-        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
-        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
-        compile group: 'javax.activation', name: 'javax.activation-api', version: activationVersion
-    }
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
-    jar {
-        archiveName = "pravega-storage-adapters-test-common.jar"
-        from {
-            (configurations.runtime).collect {
-                it.isDirectory() ? it : zipTree(it)
-            }
-        }
-        from sourceSets.test.output
-        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-    }
-}
-
 project ('extendeds3') {
     dependencies {
-        compile project(':common')
-        compile files(project(':common').sourceSets.test.output)
 
 	}
     javadoc {
@@ -176,10 +140,12 @@ project ('extendeds3') {
 
 project ('hdfs') {
     dependencies {
-        compile project(':common')
-        compile files(project(':common').sourceSets.test.output)
-        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2625.fd290ad-SNAPSHOT-tests.jar")
-        // For HDFS
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
         compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
         compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
