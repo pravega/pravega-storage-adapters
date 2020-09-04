@@ -40,6 +40,7 @@ apply plugin: 'org.ajoberstar.grgit'
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
+    apply plugin: 'java'
     if (file("src/main/java").isDirectory()) {
         apply plugin: 'java'
         apply plugin: 'io.franzbecker.gradle-lombok'
@@ -66,7 +67,20 @@ allprojects {
                 args(it, "-d", outputDir)
             }
         }
+
+        task generateJavadoc(type: Javadoc) {
+            dependsOn delombok
+            source = delombok.outputDir
+            classpath = sourceSets.main.compileClasspath
+            failOnError = false
+        }
+
+        task javadocJar(type: Jar) {
+             classifier = 'javadoc'
+             from generateJavadoc
+        }
     }
+
     // Plugin configurations
     apply from: "$rootDir/gradle/application.gradle"
     apply from: "$rootDir/gradle/checkstyle.gradle"
@@ -114,7 +128,6 @@ allprojects {
     }
     version = getProjectVersion()
     group = "io.pravega.storage"
-
     configurations.all {
         resolutionStrategy {
             //failOnVersionConflict()
@@ -122,43 +135,15 @@ allprojects {
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
         }
     }
+    if (project.hasProperty("doSigning") && project.property("doSigning") == "false") {
+        signArchives.enabled = false;
+    }
+
 }
 
-def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
-
-project ('extendeds3') {
-    dependencies {
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
-}
-
-project ('hdfs') {
-    dependencies {
-        compile "io.pravega:pravega-common:${pravegaVersion}",
-                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
-        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
-        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
-        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
-        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
-        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
+task publishAllJars() {
+    dependsOn ':extendeds3:publish'
+    dependsOn ':hdfs:publish'
 }
 
 def getProjectVersion() {
@@ -188,3 +173,38 @@ task sourceTar(type: Tar) {
     extension = 'tgz'
     compression = Compression.GZIP
 }
+
+task javadocs(type: Javadoc) {
+    description = "Generate Pravega Storage Adapters javadoc"
+    ext.projects = [':hdfs', ':extendeds3']
+    title = "Pravega storage Adapters"
+    destinationDir = file("${buildDir}/javadocs")
+    source = files(projects.collect {
+        project(it).sourceSets.main.allJava
+    })
+    classpath = files(projects.collect {
+        project(it).sourceSets.main.output + project(it).sourceSets.main.compileClasspath
+    })
+    failOnError = true
+    exclude "**/impl/**"
+    options.addBooleanOption("Xdoclint:all,-reference", true)
+}
+
+apply plugin: 'distribution'
+distributions {
+    main {
+        baseName = "pravega-storage-adapters"
+        contents {
+            duplicatesStrategy = "exclude"
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    javadoc {
+        baseName = "pravega-javadoc"
+        contents {
+            from (javadocs)
+        }
+    }
+}
+
