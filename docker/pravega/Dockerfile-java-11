@@ -20,7 +20,8 @@ ARG HDFS_JAR="hdfs/build/libs/pravega-hdfs-${PRAVEGA_BINDINGS_VERSION}.jar"
 ARG S3_JAR="extendeds3/build/libs/pravega-extendeds3-${PRAVEGA_BINDINGS_VERSION}.jar"
 COPY ${HDFS_JAR} /opt/pravega/lib
 COPY ${S3_JAR} /opt/pravega/lib
-RUN rm -rf /opt/pravega/lib/pravega-bindings-*
+ARG ONLY
+RUN if [ -z "$ONLY" ]; then echo "keeping earlier bindings jar"; else rm -rf /opt/pravega/lib/pravega-bindings-*; fi
 RUN ls -1 /opt/pravega/lib | sort
 RUN chmod +x -R /opt/pravega/lib/
 
