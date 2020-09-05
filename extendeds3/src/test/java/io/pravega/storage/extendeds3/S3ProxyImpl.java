@@ -12,7 +12,10 @@ package io.pravega.storage.extendeds3;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.s3.model.CanonicalGrantee;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.Permission;
+import com.amazonaws.services.s3.model.Permission.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.emc.object.Range;
@@ -24,6 +27,9 @@ import com.emc.object.s3.bean.DeleteObjectsResult;
 import com.emc.object.s3.bean.CopyPartResult;
 import com.emc.object.s3.bean.GetObjectResult;
 import com.emc.object.s3.bean.ListObjectsResult;
+import com.emc.object.s3.bean.CanonicalUser;
+import com.emc.object.s3.bean.Grant;
+import com.emc.object.s3.bean.Permission.*;
 import com.emc.object.s3.bean.PutObjectResult;
 import com.emc.object.s3.request.CompleteMultipartUploadRequest;
 import com.emc.object.s3.request.CopyPartRequest;
@@ -31,6 +37,8 @@ import com.emc.object.s3.request.DeleteObjectsRequest;
 import com.emc.object.s3.request.PutObjectRequest;
 import com.emc.object.s3.request.SetObjectAclRequest;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import lombok.Synchronized;
 import io.findify.s3mock.S3Mock;
 
@@ -66,35 +74,47 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public PutObjectResult putObject(PutObjectRequest request) {
-           throw new RuntimeException("Unsupported");
+           com.amazonaws.services.s3.model.PutObjectRequest awsRequest = new com.amazonaws.services.s3.model.PutObjectRequest(
+                                                                             request.getBucketName(),
+                                                                             request.getKey(),
+                                                                             new ByteArrayInputStream(request.getObject().toString().getBytes(StandardCharsets.UTF_8)),
+                                                                             null);
+           com.amazonaws.services.s3.model.PutObjectResult awsObjectResult = client.putObject(awsRequest);
+           PutObjectResult putObjectResult = new PutObjectResult();
+           return putObjectResult;
     }
 
     @Synchronized
     @Override
     public void putObject(String bucketName, String key, Range range, Object object) {
-       client.putObject(new com.amazonaws.services.s3.model.PutObjectRequest(bucketName, key, object.toString()));
+       client.putObject(new com.amazonaws.services.s3.model.PutObjectRequest(bucketName, key, 
+                                                                             new ByteArrayInputStream(object.toString().getBytes(StandardCharsets.UTF_8)),
+                                                                             null
+                                                                            ));
     }
 
     @Synchronized
     @Override
     public void setObjectAcl(String bucketName, String key, AccessControlList acl) {
-       // TODO: fill acl
-       // client.setObjectAcl(bucketName, key, null);
-       throw new RuntimeException("Unsupported");
+       com.amazonaws.services.s3.model.AccessControlList awsAcl = getAwsAcl(acl);
+       client.setObjectAcl(bucketName, key, awsAcl);
     }
 
     @Synchronized
     @Override
     public void setObjectAcl(SetObjectAclRequest request) {
-         throw new RuntimeException("Unsupported");
+       com.amazonaws.services.s3.model.SetObjectAclRequest setObjectAclRequest = new com.amazonaws.services.s3.model.SetObjectAclRequest(
+                                                                                 request.getBucketName(),
+                                                                                 request.getKey(),
+                                                                                 getAwsAcl(request.getAcl()));
+       
+       client.setObjectAcl(setObjectAclRequest);
     }
 
     @Override
     public AccessControlList getObjectAcl(String bucketName, String key) {
        com.amazonaws.services.s3.model.AccessControlList result = client.getObjectAcl(bucketName, key); 
-       // TODO: fill acl
-       // return new AccessControlList();
-       throw new RuntimeException("Unsupported");
+       return getAcl(result);
     }
 
     @Override
@@ -151,4 +171,44 @@ public class S3ProxyImpl extends S3ImplBase {
         result.setObject(object.getObjectContent());
         return result;
     }
+
+    private com.amazonaws.services.s3.model.AccessControlList getAwsAcl(AccessControlList acl) {
+       com.amazonaws.services.s3.model.AccessControlList awsAcl = new com.amazonaws.services.s3.model.AccessControlList();
+       com.amazonaws.services.s3.model.Owner owner = new com.amazonaws.services.s3.model.Owner(acl.getOwner().getId(), acl.getOwner().getDisplayName());
+       awsAcl.setOwner(owner);
+       java.util.Set<com.amazonaws.services.s3.model.Grant> grants = new java.util.HashSet<com.amazonaws.services.s3.model.Grant>();
+       for (Grant grant : acl.getGrants()) {
+            com.amazonaws.services.s3.model.Grant g = new com.amazonaws.services.s3.model.Grant(new com.amazonaws.services.s3.model.CanonicalGrantee(((CanonicalUser)grant.getGrantee()).getId()), getAwsPermission(grant.getPermission()));
+            grants.add(g);
+       }
+       return awsAcl;
+    }
+
+   private AccessControlList getAcl(com.amazonaws.services.s3.model.AccessControlList awsAcl) {
+       AccessControlList acl = new AccessControlList();
+       acl.setOwner(new CanonicalUser(awsAcl.getOwner().getId(), awsAcl.getOwner().getId()));
+       for (com.amazonaws.services.s3.model.Grant grant : awsAcl.getGrants()) {
+           Grant g = new Grant(new CanonicalUser(grant.getGrantee().getIdentifier(), ((CanonicalGrantee)grant.getGrantee()).getDisplayName()), this.getPermission(grant.getPermission()));
+           acl.addGrants(g);
+       }
+       return acl;
+   }
+
+   private com.amazonaws.services.s3.model.Permission getAwsPermission(com.emc.object.s3.bean.Permission permission) {
+        if (permission == com.emc.object.s3.bean.Permission.READ) { return com.amazonaws.services.s3.model.Permission.Read; }
+        if (permission == com.emc.object.s3.bean.Permission.WRITE) { return com.amazonaws.services.s3.model.Permission.Write; }
+        if (permission == com.emc.object.s3.bean.Permission.READ_ACP) { return com.amazonaws.services.s3.model.Permission.ReadAcp; }
+        if (permission == com.emc.object.s3.bean.Permission.WRITE_ACP) { return com.amazonaws.services.s3.model.Permission.WriteAcp; }
+        if (permission == com.emc.object.s3.bean.Permission.FULL_CONTROL) { return com.amazonaws.services.s3.model.Permission.FullControl; } 
+        return null;
+   }
+
+   private com.emc.object.s3.bean.Permission getPermission(com.amazonaws.services.s3.model.Permission permission) {
+          if (permission == com.amazonaws.services.s3.model.Permission.Read) { return com.emc.object.s3.bean.Permission.READ; }
+          if (permission == com.amazonaws.services.s3.model.Permission.Write) { return com.emc.object.s3.bean.Permission.WRITE; }
+          if (permission == com.amazonaws.services.s3.model.Permission.ReadAcp) { return com.emc.object.s3.bean.Permission.READ_ACP; }
+          if (permission == com.amazonaws.services.s3.model.Permission.WriteAcp) { return com.emc.object.s3.bean.Permission.WRITE_ACP; }
+          if (permission == com.amazonaws.services.s3.model.Permission.FullControl) { return com.emc.object.s3.bean.Permission.FULL_CONTROL; }
+          return null;
+   }
 }
