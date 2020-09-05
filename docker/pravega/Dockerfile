@@ -9,20 +9,19 @@
 #
 
 #FROM openjdk:8u212-jre-alpine3.9
-ARG DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters
-ARG DOCKER_IMAGE_REPOSITORY=pravega
-ARG DOCKER_IMAGE_VERSION=0.9.0-2625.fd290ad-SNAPSHOT
-ARG PRAVEGA_IMAGE=${DOCKER_IMAGE_REGISTRY}/${DOCKER_IMAGE_REPOSITORY}:${DOCKER_IMAGE_VERSION}
-
-ARG PRAVEGA_BINDINGS_VERSION=0.9.0-2625.fd290ad-SNAPSHOT
-ARG HDFS_JAR=hdfs/build/libs/pravega-hdfs-${PRAVEGA_BINDINGS_VERSION}.jar
-ARG S3_JAR=extendeds3/build/libs/pravega-extendeds3-${PRAVEGA_BINDINGS_VERSION}.jar
-
-FROM ${PRAVEGA_IMAGE} as docker-builder
+ARG DOCKER_IMAGE_REGISTRY
+ARG DOCKER_IMAGE_REPOSITORY
+ARG DOCKER_IMAGE_VERSION
+ARG PRAVEGA_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_IMAGE_REPOSITORY}:${DOCKER_IMAGE_VERSION}"
+FROM ${PRAVEGA_IMAGE}
 WORKDIR /opt/pravega
-COPY ${HDFS_JAR} /opt/pravega/lib/pravega-bindings-hdfs-${PRAVEGA_BINDINGS_VERSION}.jar
-COPY ${S3_JAR} /opt/pravega/lib/pravega-bindings-extendeds3-${PRAVEGA_BINDINGS_VERSION}.jar
-
+ARG PRAVEGA_BINDINGS_VERSION
+ARG HDFS_JAR="hdfs/build/libs/pravega-hdfs-${PRAVEGA_BINDINGS_VERSION}.jar"
+ARG S3_JAR="extendeds3/build/libs/pravega-extendeds3-${PRAVEGA_BINDINGS_VERSION}.jar"
+COPY ${HDFS_JAR} /opt/pravega/lib
+COPY ${S3_JAR} /opt/pravega/lib
+RUN rm -rf /opt/pravega/lib/pravega-bindings-*
+RUN ls -1 /opt/pravega/lib | sort
 RUN chmod +x -R /opt/pravega/lib/
 
 ENTRYPOINT [ "/opt/pravega/scripts/entrypoint.sh" ]

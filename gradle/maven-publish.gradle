@@ -56,7 +56,7 @@ publishing {
 
             // Declares coordinates for publishing
             groupId = 'io.pravega'
-            artifactId = "pravega-bindings-" + project.name.replace(':', '-')
+            artifactId = "pravega-" + project.name.replace(':', '-')
         }
     }
     repositories {
