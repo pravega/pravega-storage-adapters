@@ -14,8 +14,6 @@ import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.Permission;
-import com.amazonaws.services.s3.model.Permission.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.emc.object.Range;
@@ -29,7 +27,6 @@ import com.emc.object.s3.bean.GetObjectResult;
 import com.emc.object.s3.bean.ListObjectsResult;
 import com.emc.object.s3.bean.CanonicalUser;
 import com.emc.object.s3.bean.Grant;
-import com.emc.object.s3.bean.Permission.*;
 import com.emc.object.s3.bean.PutObjectResult;
 import com.emc.object.s3.request.CompleteMultipartUploadRequest;
 import com.emc.object.s3.request.CopyPartRequest;
@@ -178,7 +175,7 @@ public class S3ProxyImpl extends S3ImplBase {
        awsAcl.setOwner(owner);
        java.util.Set<com.amazonaws.services.s3.model.Grant> grants = new java.util.HashSet<com.amazonaws.services.s3.model.Grant>();
        for (Grant grant : acl.getGrants()) {
-            com.amazonaws.services.s3.model.Grant g = new com.amazonaws.services.s3.model.Grant(new com.amazonaws.services.s3.model.CanonicalGrantee(((CanonicalUser)grant.getGrantee()).getId()), getAwsPermission(grant.getPermission()));
+            com.amazonaws.services.s3.model.Grant g = new com.amazonaws.services.s3.model.Grant(new com.amazonaws.services.s3.model.CanonicalGrantee(((CanonicalUser) grant.getGrantee()).getId()), getAwsPermission(grant.getPermission()));
             grants.add(g);
        }
        return awsAcl;
@@ -188,27 +185,49 @@ public class S3ProxyImpl extends S3ImplBase {
        AccessControlList acl = new AccessControlList();
        acl.setOwner(new CanonicalUser(awsAcl.getOwner().getId(), awsAcl.getOwner().getId()));
        for (com.amazonaws.services.s3.model.Grant grant : awsAcl.getGrants()) {
-           Grant g = new Grant(new CanonicalUser(grant.getGrantee().getIdentifier(), ((CanonicalGrantee)grant.getGrantee()).getDisplayName()), this.getPermission(grant.getPermission()));
+           Grant g = new Grant(new CanonicalUser(grant.getGrantee().getIdentifier(), ((CanonicalGrantee) grant.getGrantee()).getDisplayName()), this.getPermission(grant.getPermission()));
            acl.addGrants(g);
        }
        return acl;
    }
 
    private com.amazonaws.services.s3.model.Permission getAwsPermission(com.emc.object.s3.bean.Permission permission) {
-        if (permission == com.emc.object.s3.bean.Permission.READ) { return com.amazonaws.services.s3.model.Permission.Read; }
-        if (permission == com.emc.object.s3.bean.Permission.WRITE) { return com.amazonaws.services.s3.model.Permission.Write; }
-        if (permission == com.emc.object.s3.bean.Permission.READ_ACP) { return com.amazonaws.services.s3.model.Permission.ReadAcp; }
-        if (permission == com.emc.object.s3.bean.Permission.WRITE_ACP) { return com.amazonaws.services.s3.model.Permission.WriteAcp; }
-        if (permission == com.emc.object.s3.bean.Permission.FULL_CONTROL) { return com.amazonaws.services.s3.model.Permission.FullControl; } 
-        return null;
+        com.amazonaws.services.s3.model.Permission result = null;
+        if (permission == com.emc.object.s3.bean.Permission.READ) { 
+            result =  com.amazonaws.services.s3.model.Permission.Read; 
+        }
+        if (permission == com.emc.object.s3.bean.Permission.WRITE) { 
+            result =  com.amazonaws.services.s3.model.Permission.Write; 
+        }
+        if (permission == com.emc.object.s3.bean.Permission.READ_ACP) { 
+            result = com.amazonaws.services.s3.model.Permission.ReadAcp; 
+        }
+        if (permission == com.emc.object.s3.bean.Permission.WRITE_ACP) { 
+            result = com.amazonaws.services.s3.model.Permission.WriteAcp; 
+        }
+        if (permission == com.emc.object.s3.bean.Permission.FULL_CONTROL) { 
+            result = com.amazonaws.services.s3.model.Permission.FullControl; 
+        } 
+        return result;
    }
 
    private com.emc.object.s3.bean.Permission getPermission(com.amazonaws.services.s3.model.Permission permission) {
-          if (permission == com.amazonaws.services.s3.model.Permission.Read) { return com.emc.object.s3.bean.Permission.READ; }
-          if (permission == com.amazonaws.services.s3.model.Permission.Write) { return com.emc.object.s3.bean.Permission.WRITE; }
-          if (permission == com.amazonaws.services.s3.model.Permission.ReadAcp) { return com.emc.object.s3.bean.Permission.READ_ACP; }
-          if (permission == com.amazonaws.services.s3.model.Permission.WriteAcp) { return com.emc.object.s3.bean.Permission.WRITE_ACP; }
-          if (permission == com.amazonaws.services.s3.model.Permission.FullControl) { return com.emc.object.s3.bean.Permission.FULL_CONTROL; }
-          return null;
+          com.emc.object.s3.bean.Permission result = null;
+          if (permission == com.amazonaws.services.s3.model.Permission.Read) { 
+              result = com.emc.object.s3.bean.Permission.READ; 
+          }
+          if (permission == com.amazonaws.services.s3.model.Permission.Write) { 
+              result = com.emc.object.s3.bean.Permission.WRITE; 
+          }
+          if (permission == com.amazonaws.services.s3.model.Permission.ReadAcp) { 
+              result = com.emc.object.s3.bean.Permission.READ_ACP; 
+          }
+          if (permission == com.amazonaws.services.s3.model.Permission.WriteAcp) { 
+              result = com.emc.object.s3.bean.Permission.WRITE_ACP; 
+          }
+          if (permission == com.amazonaws.services.s3.model.Permission.FullControl) { 
+              result = com.emc.object.s3.bean.Permission.FULL_CONTROL; 
+          }
+          return result;
    }
 }
