@@ -89,7 +89,6 @@ allprojects {
     apply from: "$rootDir/gradle/idea.gradle"
     apply from: "$rootDir/gradle/jacoco.gradle"
     apply from: "$rootDir/gradle/java.gradle"
-    apply from: "$rootDir/gradle/maven-publish.gradle"
     apply from: "$rootDir/gradle/rat.gradle"
 
     repositories {
@@ -150,8 +149,6 @@ def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
                       exclude group: 'org.slf4j', module: 'slf4j-simple' }
 
 project ('extendeds3') {
-    apply from: "$rootDir/gradle/maven-publish.gradle"
-
     dependencies {
 
 	}
@@ -163,8 +160,6 @@ project ('extendeds3') {
 }
 
 project ('hdfs') {
-    apply from: "$rootDir/gradle/maven-publish.gradle"
-
     dependencies {
         compile "io.pravega:pravega-common:${pravegaVersion}",
                 "io.pravega:pravega-shared-metrics:${pravegaVersion}",
