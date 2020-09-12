@@ -13,21 +13,23 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.services.s3.model.CanonicalGrantee;
-import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.emc.object.Range;
 import com.emc.object.s3.S3Config;
 import com.emc.object.s3.S3ObjectMetadata;
+import com.emc.object.s3.bean.AbstractDeleteResult;
 import com.emc.object.s3.bean.AccessControlList;
 import com.emc.object.s3.bean.CompleteMultipartUploadResult;
 import com.emc.object.s3.bean.DeleteObjectsResult;
+import com.emc.object.s3.bean.DeleteSuccess;
 import com.emc.object.s3.bean.CopyPartResult;
 import com.emc.object.s3.bean.GetObjectResult;
 import com.emc.object.s3.bean.ListObjectsResult;
 import com.emc.object.s3.bean.CanonicalUser;
 import com.emc.object.s3.bean.Grant;
 import com.emc.object.s3.bean.PutObjectResult;
+import com.emc.object.s3.bean.S3Object;
 import com.emc.object.s3.request.CompleteMultipartUploadRequest;
 import com.emc.object.s3.request.CopyPartRequest;
 import com.emc.object.s3.request.DeleteObjectsRequest;
@@ -36,6 +38,7 @@ import com.emc.object.s3.request.SetObjectAclRequest;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 import lombok.Synchronized;
 import io.findify.s3mock.S3Mock;
 
@@ -127,14 +130,35 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public DeleteObjectsResult deleteObjects(DeleteObjectsRequest request) {
-        // TODO: return client.deleteObjects(request);
-        throw new RuntimeException("Unsupported");
+       java.util.List<String> keys = request.getDeleteObjects().getKeys().stream().map(t -> t.getKey().toString()).collect(Collectors.toList());
+       com.amazonaws.services.s3.model.DeleteObjectsRequest deleteObjectsRequest = new com.amazonaws.services.s3.model.DeleteObjectsRequest(request.getBucketName());
+       deleteObjectsRequest.setKeys(keys.stream().map(key -> new com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion(key, null)).collect(Collectors.toList()));
+       com.amazonaws.services.s3.model.DeleteObjectsResult deleteObjectsResult = client.deleteObjects(deleteObjectsRequest);
+       java.util.List<AbstractDeleteResult> deleted = deleteObjectsResult.getDeletedObjects().stream().map(t -> { 
+                                           DeleteSuccess object = new DeleteSuccess();
+                                           object.setKey(t.getKey());
+                                           return (AbstractDeleteResult) object; }).collect(Collectors.toList());
+       DeleteObjectsResult result = new DeleteObjectsResult();
+       result.setResults(deleted);
+       return result;
     }
 
     @Override
     public ListObjectsResult listObjects(String bucketName, String prefix) {
-        // TODO: return client.listObjects(bucketName, prefix);
-        throw new RuntimeException("Unsupported");
+        com.amazonaws.services.s3.model.ListObjectsRequest awsRequest  = new com.amazonaws.services.s3.model.ListObjectsRequest()
+                                                                             .withBucketName(bucketName)
+                                                                             .withPrefix(prefix);
+        com.amazonaws.services.s3.model.ObjectListing awsResult = client.listObjects(awsRequest);
+        ListObjectsResult result = new ListObjectsResult();
+        java.util.List<S3Object> listed = awsResult.getObjectSummaries().stream().map(t -> {
+                                          S3Object object = new S3Object();
+                                          object.setKey(t.getKey());
+                                          return object;
+                                          }).collect(Collectors.toList());
+        result.setObjects(listed);
+        result.setBucketName(bucketName);
+        result.setPrefix(prefix);
+        return result;
     }
 
     @Override
@@ -145,7 +169,7 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public InputStream readObjectStream(String bucketName, String key, Range range) {
-        S3Object object =  client.getObject(bucketName, key);
+        com.amazonaws.services.s3.model.S3Object object =  client.getObject(bucketName, key);
         return object.getObjectContent();
     }
 
@@ -163,7 +187,7 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public GetObjectResult<InputStream> getObject(String bucketName, String key) {
-        S3Object object =  client.getObject(bucketName, key);
+        com.amazonaws.services.s3.model.S3Object object =  client.getObject(bucketName, key);
         GetObjectResult<InputStream> result = new GetObjectResult<InputStream>();
         result.setObject(object.getObjectContent());
         return result;
