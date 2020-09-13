@@ -119,8 +119,16 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public CopyPartResult copyPart(CopyPartRequest request) {
-        // TODO: return client.copyPart(request);
-        throw new RuntimeException("Unsupported");
+       com.amazonaws.services.s3.model.CopyPartRequest awsRequest = new com.amazonaws.services.s3.model.CopyPartRequest()
+                                                                        .withSourceBucketName(request.getSourceBucketName())
+                                                                        .withSourceKey(request.getSourceKey())
+                                                                        .withDestinationBucketName(request.getBucketName())
+                                                                        .withDestinationKey(request.getKey())
+                                                                        .withUploadId(request.getUploadId());
+       com.amazonaws.services.s3.model.CopyPartResult awsResult = client.copyPart(awsRequest);
+       CopyPartResult result = new CopyPartResult();
+       result.setPartNumber(awsResult.getPartNumber());
+       return result;
     }
 
     @Override
@@ -175,14 +183,23 @@ public class S3ProxyImpl extends S3ImplBase {
 
     @Override
     public String initiateMultipartUpload(String bucketName, String key) {
-        // TODO: return client.initiateMultipartUpload(bucketName, key);
-        throw new RuntimeException("Unsupported");
+        com.amazonaws.services.s3.model.InitiateMultipartUploadRequest awsRequest = new com.amazonaws.services.s3.model.InitiateMultipartUploadRequest(
+                                                                                        bucketName, key);
+        client.initiateMultipartUpload(awsRequest);
+        return null;
     }
 
     @Override
     public CompleteMultipartUploadResult completeMultipartUpload(CompleteMultipartUploadRequest request) {
-        //  TODO: return client.completeMultipartUpload(request);
-        throw new RuntimeException("Unsupported");
+        com.amazonaws.services.s3.model.CompleteMultipartUploadRequest awsRequest = new com.amazonaws.services.s3.model.CompleteMultipartUploadRequest(
+                                                                                        request.getBucketName(), request.getKey(), null, null);
+        com.amazonaws.services.s3.model.CompleteMultipartUploadResult awsResult  = client.completeMultipartUpload(awsRequest);
+        CompleteMultipartUploadResult result = new CompleteMultipartUploadResult();
+        result.setBucketName(request.getBucketName());
+        result.setKey(request.getKey());
+        result.setLocation(awsResult.getLocation());
+        result.setETag(awsResult.getETag());
+        return result;
     }
 
     @Override
