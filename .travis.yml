@@ -16,7 +16,7 @@ jdk:
 
 env:
   global:
-    - GRADLE_OPTS="-Xms128m"
+    - GRADLE_OPTS="-Xms32m"
 
 jobs:
   include:
