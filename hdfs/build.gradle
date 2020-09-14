@@ -1,0 +1,63 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+
+def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
+
+dependencies {
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile group:"io.pravega", name:"pravega-segmentstore-storage", version: pravegaVersion,  classifier: 'tests'
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
+        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
+
+}
+
+javadoc {
+    dependsOn delombok
+    source = delombok.outputDir
+    failOnError = true
+}
+
+configurations.all {
+    exclude group: "org.slf4j", module: "slf4j-log4j12"
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    outputs.upToDateWhen { false }
+    
+    testFramework {
+        useJUnit {
+            includeCategories 'io.pravega.storage.hdfs.HDFSStorageTest'
+        }
+    }
+
+    shouldRunAfter test
+}
+
+test {
+    testFramework {
+        useJUnit {
+            // excludeCategories 'io.pravega.storage.hdfs.HDFSIntegrationTest'
+        }
+    }
+}
+
