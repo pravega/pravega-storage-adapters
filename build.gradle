@@ -261,7 +261,7 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     if (JavaVersion.current().isJava11Compatible()) {
         dockerFile = "${dockerDir}/Dockerfile-java-11"
     } else {
-        dockerFile = "${dockerDir}/Dockerfile"
+        dockerFile = "${dockerDir}/Dockerfile"+"${project.suffix}"
     }
     pravegaVersion = "${project.property('pravegaDockerImageVersion')}"
     String PRAVEGA_BINDINGS_VERSION="${project.version}"
@@ -271,16 +271,43 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     if (project.hasProperty('dockerRegistry')) {
         DOCKER_IMAGE_REGISTRY = "${project.property('dockerRegistry')}"
     }
-    String result = DOCKER_IMAGE_REGISTRY + "/" + DOCKER_IMAGE_REPOSITORY + ":" + PRAVEGA_BINDINGS_VERSION
+    String result = DOCKER_IMAGE_REGISTRY + "/" + DOCKER_IMAGE_REPOSITORY + ":" + PRAVEGA_BINDINGS_VERSION + "${project.suffix}"
     remoteTag = result
 }
 
 task docker(dependsOn: [buildPravegaImage]) {
     description = "Builds all docker images"
+    project.suffix = ""
+}
+
+task extendeds3Docker(type: DockerBuildTask, dependsOn: [buildPravegaImage]) {
+    description = "Builds pravega image with extendeds3 binding"
+    if (project.suffix == "-hdfs") { return; }
+    project.suffix = "-extendeds3"
+}
+
+task hdfsDocker(type: DockerBuildTask, dependsOn: [buildPravegaImage]) {
+    description = "Builds pravega image with hdfs binding"
+    if (project.suffix == "-extendeds3") { return; }
+    project.suffix = "-hdfs" 
 }
 
 task pushPravegaImage(type: DockerPushTask) {
     mustRunAfter buildPravegaImage
+}
+
+task pushExtendedS3Image(type: DockerPushTask) {
+    mustRunAfter buildPravegaImage
+    if (project.suffix == "-hdfs") { return;}
+    project.suffix = "-extendeds3" 
+
+}
+
+task pushHdfsImage(type: DockerPushTask) {
+    mustRunAfter buildPravegaImage
+    if (project.suffix == "-extendeds3") { return; }
+    project.suffix = "-hdfs" 
+
 }
 
 task dockerPush(dependsOn: [pushPravegaImage]) {
@@ -308,7 +335,7 @@ class DockerBuildTask extends Exec {
         args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${->pravegaVersion}"
         args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters"
         args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
-        args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"
+        args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"+"${project.suffix}"
         args "-t", "${->remoteTag}"
         args "-f", "${->dockerFile}"
         args "${->dockerDir}"
@@ -324,7 +351,12 @@ class DockerPushTask extends Exec {
 
     DockerPushTask() {
         executable project.dockerExecutable
-        args "push", "${->getRemoteTag()}"
+        System.err.println("suffix=${project.suffix}")
+        if ("${project.suffix}" != "") {
+           args "push", "${->getRemoteTag()}" + "${project.suffix}"
+        } else {
+           args "push", "${->getRemoteTag()}"
+        }
     }
 
     protected void exec() {
