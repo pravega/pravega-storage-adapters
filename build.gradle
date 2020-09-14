@@ -209,17 +209,108 @@ distributions {
     }
 }
 
-/*
-artifactory {
-    publish {
-        contextUrl = artifactoryPublishUrl
-        repository {
-            repoKey = artifactoryRepo
-            username = artifactoryUser
-            password = artifactoryPassword
-        }
+task preparePravegaImage(type: Copy) {
+    into "${buildDir}/docker/pravega-storage-adapters"
+    from "docker/pravega"
+    from "$rootDir/bindings-extendeds3/build/libs/"
+    from "$rootDir/bindings-hdfs/build/libs/"
+    from (installDist) {
+        into "pravega"
+        exclude "**/*.bat"
     }
-    clientConfig.info.setBuildNumber(buildVersion)
 }
 
-*/
+task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
+    baseTag = pravegaBaseTag
+    dockerDir = preparePravegaImage.destinationDir.absolutePath
+    if (JavaVersion.current().isJava11Compatible()) {
+        dockerFile = "${dockerDir}/Dockerfile-java-11"
+    } else {
+        dockerFile = "${dockerDir}/Dockerfile"
+    }
+    pravegaVersion = "${project.property('pravegaDockerImageVersion')}"
+    String PRAVEGA_BINDINGS_VERSION="${project.version}"
+    String DOCKER_IMAGE_REGISTRY="pravega/pravega-storage-adapters"
+    String DOCKER_IMAGE_REPOSITORY="pravega"
+    String DOCKER_IMAGE_VERSION=pravegaVersion
+    if (project.hasProperty('dockerRegistry')) {
+        DOCKER_IMAGE_REGISTRY = "${project.property('dockerRegistry')}"
+    }
+    String result = DOCKER_IMAGE_REGISTRY + "/" + DOCKER_IMAGE_REPOSITORY + ":" + PRAVEGA_BINDINGS_VERSION
+    remoteTag = result
+}
+
+task docker(dependsOn: [buildPravegaImage]) {
+    description = "Builds all docker images"
+}
+
+task pushPravegaImage(type: DockerPushTask) {
+    mustRunAfter buildPravegaImage
+}
+
+task dockerPush(dependsOn: [pushPravegaImage]) {
+    description = "Push all docker images"
+}
+
+task distribution(dependsOn: [assembleDist, assembleJavadocDist]) {
+    description = "Builds a distribution package"
+}
+
+/**
+ * Task for building a docker image
+ */
+class DockerBuildTask extends Exec {
+    String baseTag
+    String dockerDir
+    String dockerFile
+    String pravegaVersion
+    String remoteTag
+    DockerBuildTask() {
+        executable project.dockerExecutable
+        args "build"
+        args "--no-cache"
+        args "--pull"
+        args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${->pravegaVersion}"
+        args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters"
+        args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
+        args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"
+        args "-t", "${->remoteTag}"
+        args "-f", "${->dockerFile}"
+        args "${->dockerDir}"
+    }
+}
+
+/**
+ * Task for pushing an image, which can either push to dockerhub or to a private registry.
+ * If pushing to dockerhub, you must be logged using using `docker login` before running.
+ */
+class DockerPushTask extends Exec {
+    String tag
+
+    DockerPushTask() {
+        executable project.dockerExecutable
+        args "push", "${->getRemoteTag()}"
+    }
+
+    protected void exec() {
+        if (project.hasProperty('dockerRegistry')) {
+            project.exec {
+                commandLine project.dockerExecutable, "tag", tag, getRemoteTag()
+            }
+        }
+        super.exec()
+    }
+
+    String getRemoteTag() {
+        String PRAVEGA_BINDINGS_VERSION="${project.property('pravegaDockerImageVersion')}"
+        String DOCKER_IMAGE_REGISTRY="pravega/pravega-storage-adapters"
+        String DOCKER_IMAGE_REPOSITORY="pravega"
+        String DOCKER_IMAGE_VERSION="${project.property('pravegaDockerImageVersion')}"
+        if (project.hasProperty('dockerRegistry')) {
+            DOCKER_IMAGE_REGISTRY = "${project.property('dockerRegistry')}"
+        }
+        String result = DOCKER_IMAGE_REGISTRY + "/" + DOCKER_IMAGE_REPOSITORY + ":" + PRAVEGA_BINDINGS_VERSION
+        return result
+    }
+}
+
