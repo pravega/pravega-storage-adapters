@@ -1,0 +1,28 @@
+#
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+
+#FROM openjdk:11.0-jre-slim
+ARG DOCKER_IMAGE_REGISTRY
+ARG DOCKER_IMAGE_REPOSITORY
+ARG DOCKER_IMAGE_VERSION
+ARG PRAVEGA_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_IMAGE_REPOSITORY}:${DOCKER_IMAGE_VERSION}"
+FROM ${PRAVEGA_IMAGE}
+WORKDIR /opt/pravega
+ARG PRAVEGA_BINDINGS_VERSION
+ARG HDFS_JAR="hdfs/build/libs/pravega-hdfs-${PRAVEGA_BINDINGS_VERSION}.jar"
+ARG S3_JAR="extendeds3/build/libs/pravega-extendeds3-${PRAVEGA_BINDINGS_VERSION}.jar"
+COPY ${HDFS_JAR} /opt/pravega/lib
+COPY ${S3_JAR} /opt/pravega/lib
+ARG ONLY
+RUN if [ -z "$ONLY" ]; then echo "keeping earlier bindings jar"; else rm -rf /opt/pravega/lib/pravega-bindings-*; fi
+RUN ls -1 /opt/pravega/lib | sort
+RUN chmod +x -R /opt/pravega/lib/
+
+ENTRYPOINT [ "/opt/pravega/scripts/entrypoint.sh" ]
