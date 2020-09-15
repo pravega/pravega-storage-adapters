@@ -28,7 +28,6 @@ buildscript {
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
-        classpath fileTree(dir: "$rootDir/libs", include: "*.jar")
     }
 }
 
@@ -42,7 +41,6 @@ allprojects {
     apply plugin: 'eclipse'
     apply plugin: 'java'
     if (file("src/main/java").isDirectory()) {
-        apply plugin: 'java'
         apply plugin: 'io.franzbecker.gradle-lombok'
         lombok {
             version = lombokVersion
@@ -89,6 +87,7 @@ allprojects {
     apply from: "$rootDir/gradle/idea.gradle"
     apply from: "$rootDir/gradle/jacoco.gradle"
     apply from: "$rootDir/gradle/java.gradle"
+    apply from: "$rootDir/gradle/maven-publish.gradle"
     apply from: "$rootDir/gradle/rat.gradle"
 
     repositories {
@@ -106,9 +105,6 @@ allprojects {
         }
         maven {
             url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
-        }
-        flatDir {
-            dirs 'libs'
         }
     }
 
@@ -128,6 +124,7 @@ allprojects {
     }
     version = getProjectVersion()
     group = "io.pravega.storage"
+
     configurations.all {
         resolutionStrategy {
             //failOnVersionConflict()
@@ -138,64 +135,12 @@ allprojects {
     if (project.hasProperty("doSigning") && project.property("doSigning") == "false") {
         signArchives.enabled = false;
     }
-}
 
 task publishAllJars() {
     dependsOn ':extendeds3:publish'
     dependsOn ':hdfs:publish'
 }
 
-def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
-
-project ('extendeds3') {
-    dependencies {
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
-}
-
-project ('hdfs') {
-    dependencies {
-        compile "io.pravega:pravega-common:${pravegaVersion}",
-                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
-        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
-        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
-        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
-        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
-        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
-}
-
-def getProjectVersion() {
-    String ver = pravegaVersion
-    if (grgit && ver.contains("-SNAPSHOT")) {
-        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
-        def count = grgit.log(includes:['HEAD']).size()
-        def commitId = "${grgit.head().abbreviatedId}"
-        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
-    }
-    return ver
-}
-
-subprojects {
-    task allDeps(type: DependencyReportTask) {}
-}
 
 task sourceCopy(type: Copy) {
     from rootDir
@@ -259,9 +204,9 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     baseTag = pravegaBaseTag
     dockerDir = preparePravegaImage.destinationDir.absolutePath
     if (JavaVersion.current().isJava11Compatible()) {
-        dockerFile = "${dockerDir}/Dockerfile-java-11"
+        dockerFile = "${dockerDir}/Dockerfile-java-11"+"-${project.name}"
     } else {
-        dockerFile = "${dockerDir}/Dockerfile"
+        dockerFile = "${dockerDir}/Dockerfile"+"-${project.name}"
     }
     pravegaVersion = "${project.property('pravegaDockerImageVersion')}"
     String PRAVEGA_BINDINGS_VERSION="${project.version}"
@@ -275,6 +220,7 @@ task buildPravegaImage(type: DockerBuildTask, dependsOn: preparePravegaImage) {
     remoteTag = result
 }
 
+
 task docker(dependsOn: [buildPravegaImage]) {
     description = "Builds all docker images"
 }
@@ -283,12 +229,16 @@ task pushPravegaImage(type: DockerPushTask) {
     mustRunAfter buildPravegaImage
 }
 
+
 task dockerPush(dependsOn: [pushPravegaImage]) {
     description = "Push all docker images"
 }
 
+
 task distribution(dependsOn: [assembleDist, assembleJavadocDist]) {
     description = "Builds a distribution package"
+}
+
 }
 
 /**
@@ -308,8 +258,8 @@ class DockerBuildTask extends Exec {
         args "--build-arg", "PRAVEGA_BINDINGS_VERSION=${->pravegaVersion}"
         args "--build-arg", "DOCKER_IMAGE_REGISTRY=pravega/pravega-storage-adapters"
         args "--build-arg", "DOCKER_IMAGE_REPOSITORY=pravega"
-        args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"
-        args "-t", "${->remoteTag}"
+        args "--build-arg", "DOCKER_IMAGE_VERSION=${->pravegaVersion}"+"-${project.name}"
+        args "-t", "${->remoteTag}"+"-${project.name}"
         args "-f", "${->dockerFile}"
         args "${->dockerDir}"
     }
@@ -324,7 +274,7 @@ class DockerPushTask extends Exec {
 
     DockerPushTask() {
         executable project.dockerExecutable
-        args "push", "${->getRemoteTag()}"
+        args "push", "${->getRemoteTag()}" + "-${project.name}"
     }
 
     protected void exec() {
@@ -348,3 +298,20 @@ class DockerPushTask extends Exec {
         return result
     }
 }
+
+
+def getProjectVersion() {
+    String ver = pravegaVersion
+    if (grgit && ver.contains("-SNAPSHOT")) {
+        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
+        def count = grgit.log(includes:['HEAD']).size()
+        def commitId = "${grgit.head().abbreviatedId}"
+        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
+    }
+    return ver
+}
+
+subprojects {
+    task allDeps(type: DependencyReportTask) {}
+}
+
