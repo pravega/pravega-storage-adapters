@@ -55,10 +55,6 @@ dependencies {
         compile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
         compile group:"io.pravega", name:"pravega-segmentstore-server-host", version: pravegaVersion,  classifier: 'tests'
         compile group:"io.pravega", name:"pravega-segmentstore-server", version: pravegaVersion,  classifier: 'tests'
-        // compile files(project(':hdfs').sourceSets.test.output)
-        // compile files(project(':extendeds3').sourceSets.test.output)
-        // compile files("$rootDir/libs/pravega-segmentstore-server-host-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
-        // compile files("$rootDir/libs/pravega-segmentstore-server-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
 
 }
 
@@ -80,7 +76,6 @@ task integrationTest(type: Test) {
     
     testFramework {
         useJUnit {
-           // includeCategories 'io.pravega.test.integration.ExtendedS3IntegrationTest'
            excludeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageTest'
            excludeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageConfigTest'
         }
@@ -93,8 +88,6 @@ test {
     testFramework {
         useJUnit {
           excludeCategories 'io.pravega.test.integration.ExtendedS3IntegrationTest'
-          // includeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageTest'
-          // includeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageConfigTest'
         }
     }
 }
