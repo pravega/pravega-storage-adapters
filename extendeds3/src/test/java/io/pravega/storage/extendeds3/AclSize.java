@@ -9,8 +9,19 @@
  */
 package io.pravega.storage.extendeds3;
 
-public class TestClass {
-    public static void main(String[] args) {
-        System.out.println("Hello world.");
-    }
+import com.emc.object.s3.bean.AccessControlList;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
+
+/**
+ * ACL and size representation for the extended S3 simulator wrappers.
+ */
+@Getter
+@AllArgsConstructor
+public class AclSize {
+    @With
+    private final AccessControlList acl;
+    @With
+    private final long size;
 }

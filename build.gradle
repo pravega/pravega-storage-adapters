@@ -28,7 +28,6 @@ buildscript {
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
-        classpath fileTree(dir: "$rootDir/libs", include: "*.jar")
     }
 }
 
@@ -89,6 +88,7 @@ allprojects {
     apply from: "$rootDir/gradle/idea.gradle"
     apply from: "$rootDir/gradle/jacoco.gradle"
     apply from: "$rootDir/gradle/java.gradle"
+    apply from: "$rootDir/gradle/maven-publish.gradle"
     apply from: "$rootDir/gradle/rat.gradle"
 
     repositories {
@@ -105,10 +105,10 @@ allprojects {
             url "https://repository.apache.org/snapshots"
         }
         maven {
-            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
+            url "http://asdrepo.isus.emc.com:8081/artifactory/nautilus-prerelease-scratch-local"
         }
-        flatDir {
-            dirs 'libs'
+        maven {
+            url "https://oss.jfrog.org/artifactory/oss-snapshot-local"
         }
     }
 
@@ -133,53 +133,18 @@ allprojects {
             //failOnVersionConflict()
             force "com.google.guava:guava:" + guavaVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
+            force "com.google.code.gson:gson:2.5"
         }
     }
     if (project.hasProperty("doSigning") && project.property("doSigning") == "false") {
         signArchives.enabled = false;
     }
+
 }
 
 task publishAllJars() {
     dependsOn ':extendeds3:publish'
     dependsOn ':hdfs:publish'
-}
-
-def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
-
-project ('extendeds3') {
-    dependencies {
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
-}
-
-project ('hdfs') {
-    dependencies {
-        compile "io.pravega:pravega-common:${pravegaVersion}",
-                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
-                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
-        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
-        compile files("$rootDir/libs/pravega-segmentstore-storage-0.9.0-2641.ea37ccadc-issue-5124-use-maven-plugin-tests.jar")
-        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
-        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
-        testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
-        testCompile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
-
-	}
-    javadoc {
-        dependsOn delombok
-        source = delombok.outputDir
-        failOnError = true
-    }
 }
 
 def getProjectVersion() {

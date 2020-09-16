@@ -1,0 +1,93 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+
+def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+                      exclude group: 'org.slf4j', module: 'slf4j-simple' }
+
+configurations.all {
+    resolutionStrategy {
+       force "com.google.code.gson:gson:2.5"
+    }
+}
+
+dependencies {
+    compile "io.pravega:pravega-common:${pravegaVersion}",
+            "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+            "io.pravega:pravega-segmentstore-storage:${pravegaVersion}"
+    compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+    compile group:"io.pravega", name:"pravega-segmentstore-storage", version: pravegaVersion,  classifier: 'tests'
+    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+    testCompile 'org.glassfish.jersey.core:jersey-common:2.28'
+
+    //For Extended S3
+    compile group: 'com.emc.ecs', name: 'object-client', version: ecsObjectClientVersion, withoutLogger
+    testCompile group: 'org.gaul', name: 's3proxy', version: '1.5.5'
+    testCompile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
+    testCompile group: 'org.apache.jclouds.provider', name: 'google-cloud-storage', version: '2.1.1'
+
+        compile "io.pravega:pravega-common:${pravegaVersion}",
+                "io.pravega:pravega-shared-metrics:${pravegaVersion}",
+                "io.pravega:pravega-shared-protocol:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-contracts:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-storage:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-server:${pravegaVersion}",
+                "io.pravega:pravega-segmentstore-server-host:${pravegaVersion}",
+                "io.pravega:pravega-controller:${pravegaVersion}",
+                "io.pravega:pravega-client:${pravegaVersion}"
+        compile  "io.pravega:pravega-test-testcommon:${pravegaVersion}"
+        compile group: 'junit', name:'junit', version: junitVersion
+        compile group: 'org.apache.curator', name: 'curator-test', version: apacheCuratorVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'org.apache.commons', name: 'commons-csv', version: apacheCommonsCsvVersion
+        compile group: 'org.apache.hadoop', name: 'hadoop-common', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: hadoopVersion, withoutLogger
+        compile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: hadoopVersion, withoutLogger
+        compile group: 'io.netty', name: 'netty-codec-http', version: nettyVersion
+        compile group:"io.pravega", name:"pravega-segmentstore-server-host", version: pravegaVersion,  classifier: 'tests'
+        compile group:"io.pravega", name:"pravega-segmentstore-server", version: pravegaVersion,  classifier: 'tests'
+
+}
+
+javadoc {
+    dependsOn delombok
+    source = delombok.outputDir
+    failOnError = true
+}
+
+configurations.all {
+    exclude group: "org.slf4j", module: "slf4j-log4j12"
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    outputs.upToDateWhen { false }
+    
+    testFramework {
+        useJUnit {
+           excludeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageTest'
+           excludeCategories 'io.pravega.storage.extendeds3.ExtendedS3StorageConfigTest'
+        }
+    }
+
+    shouldRunAfter test
+}
+
+test {
+    testFramework {
+        useJUnit {
+          excludeCategories 'io.pravega.test.integration.ExtendedS3IntegrationTest'
+        }
+    }
+}
