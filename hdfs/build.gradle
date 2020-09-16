@@ -56,7 +56,6 @@ task integrationTest(type: Test) {
 test {
     testFramework {
         useJUnit {
-            // excludeCategories 'io.pravega.storage.hdfs.HDFSIntegrationTest'
         }
     }
 }
